@@ -1,0 +1,20 @@
+[90m= [39m[34;4mApp\Models\User[39;24m {#7429
+    [34mid[39m: [35m1[39m,
+    [34mname[39m: "[32mAdmin[39m",
+    [34memail[39m: "[32madmin@bimbelexcellent.com[39m",
+    [34memail_verified_at[39m: [36mnull[39m,
+    #[33mpassword[39m: "[32m$2y$12$cuCxRenGSxzpZShZQ.cFCuMi/QJVm.vSeEPzY5RpZIZdZnWwHRtn.[39m",
+    #[33mremember_token[39m: [36mnull[39m,
+    [34mcreated_at[39m: "[32m2026-02-14 15:15:46[39m",
+    [34mupdated_at[39m: "[32m2026-02-14 15:15:46[39m",
+    [34musername[39m: [36mnull[39m,
+    [34mrole[39m: "[32mpeserta[39m",
+    [34mnama_lengkap[39m: [36mnull[39m,
+    [34mtempat_lahir[39m: [36mnull[39m,
+    [34mtanggal_lahir[39m: [36mnull[39m,
+    [34msekolah[39m: [36mnull[39m,
+    [34mjenis_kelamin[39m: [36mnull[39m,
+    [34mis_biodata_complete[39m: [36mfalse[39m,
+    [34mplain_password[39m: [36mnull[39m,
+  }
+
