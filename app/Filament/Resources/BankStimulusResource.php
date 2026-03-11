@@ -12,6 +12,12 @@ use Filament\Tables;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
+use Maatwebsite\Excel\Facades\Excel;
+use App\Exports\StimulusTemplateExport;
+use App\Imports\StimulusImport;
+use Filament\Notifications\Notification;
+use Filament\Actions\Action;
+use Filament\Forms\Components\FileUpload;
 
 class BankStimulusResource extends Resource
 {
@@ -119,6 +125,40 @@ class BankStimulusResource extends Resource
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
+            ])
+            ->headerActions([
+                Tables\Actions\Action::make('download_template')
+                    ->label('Download Template')
+                    ->icon('heroicon-o-arrow-down-tray')
+                    ->color('info')
+                    ->action(fn () => Excel::download(new StimulusTemplateExport, 'template-stimulus.xlsx')),
+                
+                Tables\Actions\Action::make('import_excel')
+                    ->label('Import Excel')
+                    ->icon('heroicon-o-arrow-up-tray')
+                    ->color('success')
+                    ->form([
+                        Forms\Components\FileUpload::make('file')
+                            ->label('File Excel')
+                            ->required()
+                            ->disk('public')
+                            ->directory('temp-imports'),
+                    ])
+                    ->action(function (array $data) {
+                        try {
+                            Excel::import(new StimulusImport, storage_path('app/public/' . $data['file']));
+                            
+                            Notification::make()
+                                ->title('Berhasil mengimpor data stimulus')
+                                ->success()
+                                ->send();
+                        } catch (\Exception $e) {
+                            Notification::make()
+                                ->title('Gagal mengimpor data: ' . $e->getMessage())
+                                ->danger()
+                                ->send();
+                        }
+                    }),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
