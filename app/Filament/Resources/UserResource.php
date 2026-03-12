@@ -13,6 +13,8 @@ use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Facades\Hash;
+use Filament\Tables\Actions\BulkAction;
+use Illuminate\Database\Eloquent\Collection;
 
 class UserResource extends Resource
 {
@@ -25,6 +27,11 @@ class UserResource extends Resource
     protected static ?int $navigationSort = 1;
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
+
+    public static function getEloquentQuery(): Builder
+    {
+        return parent::getEloquentQuery()->where('role', 'peserta');
+    }
 
     public static function form(Form $form): Form
     {
@@ -108,8 +115,7 @@ class UserResource extends Resource
                     ->boolean(),
                 Tables\Columns\TextColumn::make('jadwalTryouts_count')
                     ->label('Tryout')
-                    ->counts('jadwalTryouts')
-                    ->sortable(),
+                    ->counts('jadwalTryouts'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime('d M Y')
@@ -118,11 +124,18 @@ class UserResource extends Resource
             ])
             ->defaultSort('username', 'asc')
             ->filters([
-                Tables\Filters\SelectFilter::make('role')
-                    ->options([
-                        'admin' => 'Admin',
-                        'peserta' => 'Peserta',
-                    ]),
+                Tables\Filters\SelectFilter::make('sekolah')
+                    ->label('Sekolah')
+                    ->options(fn () => User::where('role', 'peserta')
+                        ->whereNotNull('sekolah')
+                        ->where('sekolah', '!=', '')
+                        ->distinct()
+                        ->orderBy('sekolah')
+                        ->pluck('sekolah', 'sekolah')
+                        ->toArray()
+                    )
+                    ->searchable()
+                    ->placeholder('Semua Sekolah'),
                 Tables\Filters\TernaryFilter::make('is_biodata_complete')
                     ->label('Biodata Lengkap'),
             ])
@@ -133,6 +146,18 @@ class UserResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
+                    BulkAction::make('cetak_kartu')
+                        ->label('Cetak Kartu')
+                        ->icon('heroicon-o-printer')
+                        ->color('info')
+                        ->action(function (Collection $records) {
+                            $ids = $records->pluck('id')->implode(',');
+                            $url = route('print.kartu-peserta', ['ids' => $ids]);
+                            
+                            // Redirect ke halaman print dalam tab baru
+                            return redirect()->away($url);
+                        })
+                        ->requiresConfirmation(false),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);
@@ -168,13 +193,12 @@ class UserResource extends Resource
     }
 
     /**
-     * Get next available username number
+     * Get next available username number based on a custom prefix
      */
-    public static function getNextUsernameNumber(int $year): int
+    public static function getNextUsernameNumberFromPrefix(string $prefix): int
     {
-        $prefix = 'P' . $year;
         $lastUser = User::where('username', 'like', $prefix . '%')
-            ->orderBy('username', 'desc')
+            ->orderByRaw('CAST(SUBSTRING(username, ' . (strlen($prefix) + 1) . ') AS UNSIGNED) DESC')
             ->first();
 
         if (!$lastUser) {
