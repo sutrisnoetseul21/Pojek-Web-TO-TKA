@@ -47,6 +47,9 @@ class RefMapelResource extends Resource
                 Forms\Components\TextInput::make('kode_mapel')
                     ->label('Kode Mapel')
                     ->required()
+                    ->unique(ignoreRecord: true, modifyRuleUsing: function (\Illuminate\Validation\Rules\Unique $rule, callable $get) {
+                        return $rule->where('jenjang', $get('jenjang'));
+                    })
                     ->maxLength(255),
                 Forms\Components\Select::make('jenjang')
                     ->options([
