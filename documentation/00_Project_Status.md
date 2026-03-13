@@ -29,7 +29,8 @@
 *   [x] **User Management**:
     *   [x] **Security**: Penentuan role `admin` untuk akses panel Filament.
     *   [x] **Admin Seeding**: Penambahan user admin default (`admin@admin.com`).
-    *   [ ] **Role Overhaul**: Perencanaan penambahan `super_admin` dan `admin` (jenjang & sekolah) sedang dilakukan.
+    *   [x] **Role Overhaul**: Implementasi `super_admin` dan `admin` berbasis jenjang & sekolah.
+    *   [x] **Custom Resources**: `UserSuperAdminResource` & `UserAdminResource`.
 
 ### D. Student Portal (Halaman Ujian)
 *   [x] **Halaman Soal**: Layout split screen, Timer per mapel, navigasi kontekstual.
@@ -47,16 +48,16 @@
 | GD Extension Missing | Install `php-gd` | Syarat Laravel Excel |
 | Typo Migration | `kategori_id` -> `kategori_ids` | Fix bug migration lama |
 | Missing Admin Access | Tambah logic `role === admin` | Fix izin masuk Admin Panel |
+| Role Scoping | Implementasi `getEloquentQuery` scoping | Fix keamanan data antar jenjang |
 
 ---
 
 ## 3. Langkah Selanjutnya (Next Steps)
 
 ### Prioritas Tinggi
-1.  **Role & Otoritas User**: Perombakan sistem role ke `super_admin` dan `admin` berbasis jenjang (Direncanakan).
-2.  **Excel Import Bank Soal**: Mengembangkan format Excel untuk butir soal (sedang direncanakan).
-3.  **Sistem Penilaian**: Perhitungan total_nilai yang lebih presisi.
-4.  **Timer Auto-submit**: Submit otomatis saat waktu habis.
+1.  **Excel Import Bank Soal**: Mengembangkan format Excel untuk butir soal (sedang direncanakan).
+2.  **Sistem Penilaian**: Perhitungan total_nilai yang lebih presisi.
+3.  **Timer Auto-submit**: Submit otomatis saat waktu habis.
 
 ### Prioritas Menengah
 4.  **Math Editor**: Integrasi MathJax/KaTeX.

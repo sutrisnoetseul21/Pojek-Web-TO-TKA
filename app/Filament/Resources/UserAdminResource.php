@@ -27,7 +27,7 @@ class UserAdminResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->where('role', 'admin');
+        return parent::getEloquentQuery()->where(fn (Builder $query) => $query->where('role', '=', 'admin'));
     }
 
     public static function canViewAny(): bool

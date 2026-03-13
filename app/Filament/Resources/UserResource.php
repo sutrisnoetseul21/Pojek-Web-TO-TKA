@@ -30,15 +30,15 @@ class UserResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery()->where('role', '=', 'peserta');
+        $query = parent::getEloquentQuery()->where(fn (Builder $query) => $query->where('role', '=', 'peserta'));
         $user = auth()->user();
 
         if ($user->isAdmin()) {
             if ($user->jenjang) {
-                $query->where('jenjang', '=', $user->jenjang);
+                $query->where(fn (Builder $query) => $query->where('jenjang', '=', $user->jenjang));
             }
             if ($user->sekolah) {
-                $query->where('sekolah', '=', $user->sekolah);
+                $query->where(fn (Builder $query) => $query->where('sekolah', '=', $user->sekolah));
             }
         }
 
