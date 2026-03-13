@@ -9,4 +9,9 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateUserAdmin extends CreateRecord
 {
     protected static string $resource = UserAdminResource::class;
+
+    protected function getRedirectUrl(): string
+    {
+        return $this->getResource()::getUrl('index');
+    }
 }

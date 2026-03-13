@@ -23,7 +23,7 @@ class RefMapelResource extends Resource
         $user = auth()->user();
 
         if ($user->isAdmin() && $user->jenjang) {
-            $query->where(fn (Builder $query) => $query->where('jenjang', '=', $user->jenjang));
+            $query->where(fn (Builder $q) => $q->where('jenjang', '=', $user->jenjang));
         }
 
         return $query;
