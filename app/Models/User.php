@@ -33,6 +33,7 @@ class User extends Authenticatable implements FilamentUser
         'is_biodata_complete',
         'plain_password',
         'jenjang',
+        'npsn',
     ];
 
     /**

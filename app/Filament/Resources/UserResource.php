@@ -86,6 +86,13 @@ class UserResource extends Resource
                             ->label('Sekolah')
                             ->default(fn () => auth()->user()->sekolah)
                             ->disabled(fn () => auth()->user()->isAdmin() && auth()->user()->sekolah !== null)
+                            ->required()
+                            ->dehydrated(),
+                        Forms\Components\TextInput::make('npsn')
+                            ->label('NPSN')
+                            ->default(fn () => auth()->user()->npsn)
+                            ->disabled(fn () => auth()->user()->isAdmin() && auth()->user()->npsn !== null)
+                            ->required()
                             ->dehydrated(),
                         Forms\Components\TextInput::make('tempat_lahir')
                             ->label('Tempat Lahir'),
@@ -137,6 +144,11 @@ class UserResource extends Resource
                     ]),
                 Tables\Columns\TextColumn::make('sekolah')
                     ->label('Sekolah')
+                    ->searchable()
+                    ->placeholder('Belum diisi')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('npsn')
+                    ->label('NPSN')
                     ->searchable()
                     ->placeholder('Belum diisi')
                     ->toggleable(),

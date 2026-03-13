@@ -70,8 +70,13 @@ class UserAdminResource extends Resource
                             ])
                             ->required(),
                         Forms\Components\TextInput::make('sekolah')
-                            ->label('Nama Sekolah (Opsional)')
-                            ->helperText('Kosongkan jika admin mengelola seluruh sekolah di jenjang tersebut'),
+                            ->label('Nama Sekolah')
+                            ->placeholder('Contoh: SDN 1 Gandaria')
+                            ->required(),
+                        Forms\Components\TextInput::make('npsn')
+                            ->label('NPSN')
+                            ->placeholder('Contoh: 12345678')
+                            ->required(),
                     ])->columns(2),
             ]);
     }
@@ -92,7 +97,12 @@ class UserAdminResource extends Resource
                         'info' => 'UMUM',
                     ]),
                 Tables\Columns\TextColumn::make('sekolah')
-                    ->placeholder('Semua Sekolah'),
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('npsn')
+                    ->label('NPSN')
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable()

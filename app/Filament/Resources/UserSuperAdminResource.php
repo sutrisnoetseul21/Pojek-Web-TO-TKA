@@ -55,7 +55,7 @@ class UserSuperAdminResource extends Resource
                             ->required(fn (string $context): bool => $context === 'create'),
                         Forms\Components\Hidden::make('role')
                             ->default('super_admin'),
-                    ])->columns(2),
+                    ])->columns(['default' => 2]),
             ]);
     }
 
