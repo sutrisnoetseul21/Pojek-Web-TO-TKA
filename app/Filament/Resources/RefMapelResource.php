@@ -17,6 +17,18 @@ class RefMapelResource extends Resource
 {
     protected static ?string $model = RefMapel::class;
 
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if ($user->isAdmin() && $user->jenjang) {
+            $query->where('jenjang', '=', $user->jenjang);
+        }
+
+        return $query;
+    }
+
     protected static ?string $navigationLabel = 'Mata Pelajaran';
     protected static ?string $modelLabel = 'Mata Pelajaran';
     protected static ?string $pluralModelLabel = 'Mata Pelajaran';
@@ -41,9 +53,12 @@ class RefMapelResource extends Resource
                         'SD' => 'SD',
                         'SMP' => 'SMP',
                         'SMA' => 'SMA',
+                        'SMK' => 'SMK',
                         'UMUM' => 'UMUM',
                     ])
-                    ->required(),
+                    ->required()
+                    ->default(fn () => auth()->user()->jenjang ?? 'UMUM')
+                    ->disabled(fn () => auth()->user()->isAdmin() && auth()->user()->jenjang !== null),
             ]);
     }
 

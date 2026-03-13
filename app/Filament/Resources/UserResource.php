@@ -30,7 +30,19 @@ class UserResource extends Resource
 
     public static function getEloquentQuery(): Builder
     {
-        return parent::getEloquentQuery()->where('role', 'peserta');
+        $query = parent::getEloquentQuery()->where('role', '=', 'peserta');
+        $user = auth()->user();
+
+        if ($user->isAdmin()) {
+            if ($user->jenjang) {
+                $query->where('jenjang', '=', $user->jenjang);
+            }
+            if ($user->sekolah) {
+                $query->where('sekolah', '=', $user->sekolah);
+            }
+        }
+
+        return $query;
     }
 
     public static function form(Form $form): Form
@@ -49,22 +61,30 @@ class UserResource extends Resource
                             ->label('Password (Plain)')
                             ->disabled()
                             ->helperText('Password tidak bisa dirubah untuk keamanan'),
-                        Forms\Components\Select::make('role')
-                            ->options([
-                                'admin' => 'Admin',
-                                'peserta' => 'Peserta',
-                            ])
-                            ->required()
+                        Forms\Components\Hidden::make('role')
                             ->default('peserta'),
-                    ])->columns(3),
+                    ])->columns(['default' => 3]),
 
                 Forms\Components\Section::make('Biodata')
                     ->description('Biodata peserta (diisi saat pertama login)')
                     ->schema([
                         Forms\Components\TextInput::make('nama_lengkap')
                             ->label('Nama Lengkap'),
+                        Forms\Components\Select::make('jenjang')
+                            ->options([
+                                'SD' => 'SD',
+                                'SMP' => 'SMP',
+                                'SMA' => 'SMA',
+                                'SMK' => 'SMK',
+                                'UMUM' => 'Umum',
+                            ])
+                            ->required()
+                            ->default(fn () => auth()->user()->jenjang)
+                            ->disabled(fn () => auth()->user()->isAdmin() && auth()->user()->jenjang !== null),
                         Forms\Components\TextInput::make('sekolah')
-                            ->label('Sekolah'),
+                            ->label('Sekolah')
+                            ->default(fn () => auth()->user()->sekolah)
+                            ->disabled(fn () => auth()->user()->isAdmin() && auth()->user()->sekolah !== null),
                         Forms\Components\TextInput::make('tempat_lahir')
                             ->label('Tempat Lahir'),
                         Forms\Components\DatePicker::make('tanggal_lahir')
@@ -78,7 +98,7 @@ class UserResource extends Resource
                         Forms\Components\Toggle::make('is_biodata_complete')
                             ->label('Biodata Lengkap')
                             ->disabled(),
-                    ])->columns(3),
+                    ])->columns(['default' => 3]),
             ]);
     }
 
@@ -105,6 +125,14 @@ class UserResource extends Resource
                     ->label('Nama')
                     ->searchable()
                     ->placeholder('Belum diisi'),
+                Tables\Columns\BadgeColumn::make('jenjang')
+                    ->colors([
+                        'primary' => 'SD',
+                        'success' => 'SMP',
+                        'warning' => 'SMA',
+                        'danger' => 'SMK',
+                        'info' => 'UMUM',
+                    ]),
                 Tables\Columns\TextColumn::make('sekolah')
                     ->label('Sekolah')
                     ->searchable()

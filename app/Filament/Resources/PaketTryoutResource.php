@@ -19,6 +19,18 @@ class PaketTryoutResource extends Resource
 {
     protected static ?string $model = PaketTryout::class;
 
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if ($user->isAdmin() && $user->jenjang) {
+            $query->where('jenjang', '=', $user->jenjang);
+        }
+
+        return $query;
+    }
+
     protected static ?string $navigationLabel = 'Paket Tryout';
     protected static ?string $modelLabel = 'Paket Tryout';
     protected static ?string $pluralModelLabel = 'Paket Tryout';
@@ -50,10 +62,12 @@ class PaketTryoutResource extends Resource
                                 'SD' => 'SD',
                                 'SMP' => 'SMP',
                                 'SMA' => 'SMA',
+                                'SMK' => 'SMK',
                                 'UMUM' => 'UMUM',
                             ])
                             ->required()
-                            ->default('UMUM'),
+                            ->default(fn () => auth()->user()->jenjang ?? 'UMUM')
+                            ->disabled(fn () => auth()->user()->isAdmin() && auth()->user()->jenjang !== null),
                         Forms\Components\Toggle::make('is_active')
                             ->label('Aktif')
                             ->helperText('Paket aktif bisa dijadwalkan'),

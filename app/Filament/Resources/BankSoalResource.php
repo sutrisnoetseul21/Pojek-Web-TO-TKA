@@ -17,6 +17,20 @@ class BankSoalResource extends Resource
 {
     protected static ?string $model = BankSoal::class;
 
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if ($user->isAdmin() && $user->jenjang) {
+            $query->whereHas('mapel', function ($q) use ($user) {
+                $q->where('jenjang', '=', $user->jenjang);
+            });
+        }
+
+        return $query;
+    }
+
     protected static ?string $navigationLabel = 'Bank Soal';
     protected static ?string $modelLabel = 'Bank Soal';
     protected static ?string $pluralModelLabel = 'Bank Soal';

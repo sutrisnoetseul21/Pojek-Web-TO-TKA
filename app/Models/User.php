@@ -32,6 +32,7 @@ class User extends Authenticatable implements FilamentUser
         'jenis_kelamin',
         'is_biodata_complete',
         'plain_password',
+        'jenjang',
     ];
 
     /**
@@ -64,7 +65,22 @@ class User extends Authenticatable implements FilamentUser
      */
     public function canAccessPanel(Panel $panel): bool
     {
+        return in_array($this->role, ['super_admin', 'admin']);
+    }
+
+    public function isSuperAdmin(): bool
+    {
+        return $this->role === 'super_admin';
+    }
+
+    public function isAdmin(): bool
+    {
         return $this->role === 'admin';
+    }
+
+    public function isPeserta(): bool
+    {
+        return $this->role === 'peserta';
     }
 
     /**
@@ -83,6 +99,14 @@ class User extends Authenticatable implements FilamentUser
     public function scopePeserta($query)
     {
         return $query->where('role', 'peserta');
+    }
+
+    /**
+     * Scope untuk super admin saja
+     */
+    public function scopeSuperAdmin($query)
+    {
+        return $query->where('role', 'super_admin');
     }
 
     /**

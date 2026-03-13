@@ -17,6 +17,20 @@ class RefPaketSoalResource extends Resource
 {
     protected static ?string $model = RefPaketSoal::class;
 
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if ($user->isAdmin() && $user->jenjang) {
+            $query->whereHas('mapel', function ($q) use ($user) {
+                $q->where('jenjang', '=', $user->jenjang);
+            });
+        }
+
+        return $query;
+    }
+
     protected static ?string $navigationLabel = 'Kategori Soal';
     protected static ?string $modelLabel = 'Kategori Soal';
     protected static ?string $pluralModelLabel = 'Kategori Soal';

@@ -23,6 +23,20 @@ class BankStimulusResource extends Resource
 {
     protected static ?string $model = BankStimulus::class;
 
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if ($user->isAdmin() && $user->jenjang) {
+            $query->whereHas('mapel', function ($q) use ($user) {
+                $q->where('jenjang', '=', $user->jenjang);
+            });
+        }
+
+        return $query;
+    }
+
     protected static ?string $navigationLabel = 'Stimulus (Wacana)';
     protected static ?string $modelLabel = 'Stimulus';
     protected static ?string $pluralModelLabel = 'Stimulus';

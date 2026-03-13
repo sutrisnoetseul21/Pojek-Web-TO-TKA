@@ -18,6 +18,20 @@ class JadwalTryoutResource extends Resource
 {
     protected static ?string $model = JadwalTryout::class;
 
+    public static function getEloquentQuery(): Builder
+    {
+        $query = parent::getEloquentQuery();
+        $user = auth()->user();
+
+        if ($user->isAdmin() && $user->jenjang) {
+            $query->whereHas('paketTryout', function ($q) use ($user) {
+                $q->where('jenjang', '=', $user->jenjang);
+            });
+        }
+
+        return $query;
+    }
+
     protected static ?string $navigationLabel = 'Jadwal Tryout';
     protected static ?string $modelLabel = 'Jadwal Tryout';
     protected static ?string $pluralModelLabel = 'Jadwal Tryout';
