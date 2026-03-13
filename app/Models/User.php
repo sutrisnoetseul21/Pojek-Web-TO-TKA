@@ -37,6 +37,14 @@ class User extends Authenticatable implements FilamentUser
     ];
 
     /**
+     * Fallback name for Filament if name is null
+     */
+    public function getNameAttribute($value): string
+    {
+        return $value ?? $this->username ?? 'User';
+    }
+
+    /**
      * The attributes that should be hidden for serialization.
      *
      * @var list<string>
