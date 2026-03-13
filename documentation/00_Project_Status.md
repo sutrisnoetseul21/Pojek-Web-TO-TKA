@@ -1,6 +1,6 @@
 # Status Proyek: Tryout TKA Bimbel Excellent
 
-> **Terakhir diperbarui**: 11 Maret 2026
+> **Terakhir diperbarui**: 13 Maret 2026
 
 ## 1. Pekerjaan yang Telah Selesai (Completed)
 
@@ -29,6 +29,7 @@
 *   [x] **User Management**:
     *   [x] **Security**: Penentuan role `admin` untuk akses panel Filament.
     *   [x] **Admin Seeding**: Penambahan user admin default (`admin@admin.com`).
+    *   [ ] **Role Overhaul**: Perencanaan penambahan `super_admin` dan `admin` (jenjang & sekolah) sedang dilakukan.
 
 ### D. Student Portal (Halaman Ujian)
 *   [x] **Halaman Soal**: Layout split screen, Timer per mapel, navigasi kontekstual.
@@ -52,9 +53,10 @@
 ## 3. Langkah Selanjutnya (Next Steps)
 
 ### Prioritas Tinggi
-1.  **Excel Import Bank Soal**: Mengembangkan format Excel untuk butir soal (sedang direncanakan).
-2.  **Sistem Penilaian**: Perhitungan total_nilai yang lebih presisi.
-3.  **Timer Auto-submit**: Submit otomatis saat waktu habis.
+1.  **Role & Otoritas User**: Perombakan sistem role ke `super_admin` dan `admin` berbasis jenjang (Direncanakan).
+2.  **Excel Import Bank Soal**: Mengembangkan format Excel untuk butir soal (sedang direncanakan).
+3.  **Sistem Penilaian**: Perhitungan total_nilai yang lebih presisi.
+4.  **Timer Auto-submit**: Submit otomatis saat waktu habis.
 
 ### Prioritas Menengah
 4.  **Math Editor**: Integrasi MathJax/KaTeX.
