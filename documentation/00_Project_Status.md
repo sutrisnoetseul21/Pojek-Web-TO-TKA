@@ -31,11 +31,11 @@
     *   [x] **Admin Seeding**: Penambahan user admin default (`admin@admin.com`).
     *   [x] **Role Overhaul**: Implementasi `super_admin` dan `admin` berbasis jenjang & sekolah.
     *   [x] **Custom Resources**: `UserSuperAdminResource` & `UserAdminResource`.
+    *   [x] **NPSN Support**: Penambahan kolom NPSN dan kewajiban data sekolah bagi Admin.
+    *   [x] **UX Optimization**: Redirect otomatis ke daftar (tabel) setelah Create/Edit.
 
 ### D. Student Portal (Halaman Ujian)
-*   [x] **Halaman Soal**: Layout split screen, Timer per mapel, navigasi kontekstual.
-*   [x] **Support Soal**: PG Tunggal, PG Kompleks, Benar/Salah (Tabel).
-*   [x] **Automation**: Auto-save jawaban via AJAX.
+... (tetap)
 
 ---
 
@@ -50,6 +50,9 @@
 | Missing Admin Access | Tambah logic `role === admin` | Fix izin masuk Admin Panel |
 | Role Scoping | Implementasi `getEloquentQuery` scoping | Fix keamanan data antar jenjang |
 | Disabled Fields | Tambah `dehydrated()` pada Jenjang | Fix data tidak tersimpan saat form di-disable |
+| Field Name Default | `name` made Nullable | Fix error saat create Admin/User |
+| Filament Avatar | `getNameAttribute` accessor | Fix TypeError `getUserName` null |
+| Unique Mapel | Composite Unique `kode` + `jenjang` | Fix duplikasi kode mapel antar jenjang |
 
 ---
 
