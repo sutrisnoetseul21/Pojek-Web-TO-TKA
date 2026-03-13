@@ -80,11 +80,13 @@ class UserResource extends Resource
                             ])
                             ->required()
                             ->default(fn () => auth()->user()->jenjang)
-                            ->disabled(fn () => auth()->user()->isAdmin() && auth()->user()->jenjang !== null),
+                            ->disabled(fn () => auth()->user()->isAdmin() && auth()->user()->jenjang !== null)
+                            ->dehydrated(),
                         Forms\Components\TextInput::make('sekolah')
                             ->label('Sekolah')
                             ->default(fn () => auth()->user()->sekolah)
-                            ->disabled(fn () => auth()->user()->isAdmin() && auth()->user()->sekolah !== null),
+                            ->disabled(fn () => auth()->user()->isAdmin() && auth()->user()->sekolah !== null)
+                            ->dehydrated(),
                         Forms\Components\TextInput::make('tempat_lahir')
                             ->label('Tempat Lahir'),
                         Forms\Components\DatePicker::make('tanggal_lahir')

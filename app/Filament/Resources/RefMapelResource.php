@@ -58,7 +58,8 @@ class RefMapelResource extends Resource
                     ])
                     ->required()
                     ->default(fn () => auth()->user()->jenjang ?? 'UMUM')
-                    ->disabled(fn () => auth()->user()->isAdmin() && auth()->user()->jenjang !== null),
+                    ->disabled(fn () => auth()->user()->isAdmin() && auth()->user()->jenjang !== null)
+                    ->dehydrated(),
             ]);
     }
 

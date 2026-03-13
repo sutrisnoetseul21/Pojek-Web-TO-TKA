@@ -67,7 +67,8 @@ class PaketTryoutResource extends Resource
                             ])
                             ->required()
                             ->default(fn () => auth()->user()->jenjang ?? 'UMUM')
-                            ->disabled(fn () => auth()->user()->isAdmin() && auth()->user()->jenjang !== null),
+                            ->disabled(fn () => auth()->user()->isAdmin() && auth()->user()->jenjang !== null)
+                            ->dehydrated(),
                         Forms\Components\Toggle::make('is_active')
                             ->label('Aktif')
                             ->helperText('Paket aktif bisa dijadwalkan'),

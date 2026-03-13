@@ -49,6 +49,7 @@
 | Typo Migration | `kategori_id` -> `kategori_ids` | Fix bug migration lama |
 | Missing Admin Access | Tambah logic `role === admin` | Fix izin masuk Admin Panel |
 | Role Scoping | Implementasi `getEloquentQuery` scoping | Fix keamanan data antar jenjang |
+| Disabled Fields | Tambah `dehydrated()` pada Jenjang | Fix data tidak tersimpan saat form di-disable |
 
 ---
 
