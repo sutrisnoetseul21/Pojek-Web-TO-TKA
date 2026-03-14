@@ -46,7 +46,8 @@ class BankStimulusResource extends Resource
     protected static ?string $navigationLabel = 'Stimulus (Wacana)';
     protected static ?string $modelLabel = 'Stimulus';
     protected static ?string $pluralModelLabel = 'Stimulus';
-    protected static ?string $navigationGroup = 'Bank Soal';
+    protected static ?string $navigationGroup = 'Bank Soal & Mata Pelajaran';
+    protected static ?int $navigationSort = 3;
 
     protected static ?string $navigationIcon = 'heroicon-o-document-text';
 

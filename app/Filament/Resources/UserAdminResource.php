@@ -22,7 +22,7 @@ class UserAdminResource extends Resource
     protected static ?string $modelLabel = 'Admin';
     protected static ?string $pluralModelLabel = 'Admins';
     protected static ?string $navigationGroup = 'Manajemen User';
-    protected static ?int $navigationSort = 2;
+    protected static ?int $navigationSort = 1;
 
     protected static ?string $navigationIcon = 'heroicon-o-user-group';
 

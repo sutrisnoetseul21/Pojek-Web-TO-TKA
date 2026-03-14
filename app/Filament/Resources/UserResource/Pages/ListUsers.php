@@ -28,34 +28,6 @@ class ListUsers extends ListRecords
             Actions\CreateAction::make()
                 ->label('Tambah Manual'),
 
-            Actions\Action::make('cetak_kartu')
-                ->label('Cetak Kartu')
-                ->icon('heroicon-o-printer')
-                ->color('danger')
-                ->form([
-                    Select::make('sekolah')
-                        ->label('Filter Sekolah')
-                        ->options(function () {
-                            $sekolahList = ['semua' => '— Semua Sekolah —'];
-                            $sekolahFromDb = User::where('role', 'peserta')
-                                ->whereNotNull('sekolah')
-                                ->where('sekolah', '!=', '')
-                                ->distinct()
-                                ->orderBy('sekolah')
-                                ->pluck('sekolah', 'sekolah')
-                                ->toArray();
-                            return $sekolahList + $sekolahFromDb;
-                        })
-                        ->required()
-                        ->default('semua')
-                        ->searchable()
-                        ->helperText('Pilih sekolah tertentu atau cetak semua sekolah sekaligus.'),
-                ])
-                ->action(function (array $data) {
-                    $url = route('print.kartu-peserta', ['sekolah' => $data['sekolah']]);
-                    $this->redirect($url);
-                }),
-
             Actions\Action::make('settings')
                 ->label('Pengaturan Prefix')
                 ->icon('heroicon-o-cog-6-tooth')

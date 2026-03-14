@@ -28,6 +28,15 @@ class AdminPanelProvider extends PanelProvider
             ->path('admin')
             ->login()
             ->sidebarCollapsibleOnDesktop()
+            ->navigationGroups([
+                'Tryout',
+                'Bank Soal & Mata Pelajaran',
+                'Monitoring Ujian',
+                'Laporan / Hasil',
+                'Manajemen Peserta',
+                'Manajemen User',
+                'Sistem / Pengaturan',
+            ])
             ->colors([
                 'primary' => Color::Amber,
             ])

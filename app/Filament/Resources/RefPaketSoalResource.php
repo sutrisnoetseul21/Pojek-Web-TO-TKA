@@ -40,7 +40,8 @@ class RefPaketSoalResource extends Resource
     protected static ?string $navigationLabel = 'Kategori Soal';
     protected static ?string $modelLabel = 'Kategori Soal';
     protected static ?string $pluralModelLabel = 'Kategori Soal';
-    protected static ?string $navigationGroup = 'Bank Soal';
+    protected static ?string $navigationGroup = 'Bank Soal & Mata Pelajaran';
+    protected static ?int $navigationSort = 4;
 
     protected static ?string $navigationIcon = 'heroicon-o-folder';
 

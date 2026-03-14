@@ -38,7 +38,8 @@ class RefMapelResource extends Resource
     protected static ?string $navigationLabel = 'Mata Pelajaran';
     protected static ?string $modelLabel = 'Mata Pelajaran';
     protected static ?string $pluralModelLabel = 'Mata Pelajaran';
-    protected static ?string $navigationGroup = 'Data Master';
+    protected static ?string $navigationGroup = 'Bank Soal & Mata Pelajaran';
+    protected static ?int $navigationSort = 1;
 
     protected static ?string $navigationIcon = 'heroicon-o-book-open';
 

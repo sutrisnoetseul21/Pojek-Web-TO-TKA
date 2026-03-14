@@ -40,7 +40,8 @@ class BankSoalResource extends Resource
     protected static ?string $navigationLabel = 'Bank Soal';
     protected static ?string $modelLabel = 'Bank Soal';
     protected static ?string $pluralModelLabel = 'Bank Soal';
-    protected static ?string $navigationGroup = 'Bank Soal';
+    protected static ?string $navigationGroup = 'Bank Soal & Mata Pelajaran';
+    protected static ?int $navigationSort = 2;
 
     protected static ?string $navigationIcon = 'heroicon-o-list-bullet';
 

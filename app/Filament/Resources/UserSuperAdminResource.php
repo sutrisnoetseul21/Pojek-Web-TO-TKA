@@ -21,7 +21,7 @@ class UserSuperAdminResource extends Resource
     protected static ?string $modelLabel = 'Super Admin';
     protected static ?string $pluralModelLabel = 'Super Admins';
     protected static ?string $navigationGroup = 'Manajemen User';
-    protected static ?int $navigationSort = 3;
+    protected static ?int $navigationSort = 2;
 
     protected static ?string $navigationIcon = 'heroicon-o-shield-check';
 
