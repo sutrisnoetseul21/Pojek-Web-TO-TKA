@@ -11,6 +11,15 @@ use PhpOffice\PhpSpreadsheet\Style\Fill;
 
 class UserTemplateExport implements WithTitle, WithHeadings, WithEvents, \Maatwebsite\Excel\Concerns\FromArray
 {
+    protected $sekolahId;
+    protected $kelasId;
+
+    public function __construct($sekolahId = null, $kelasId = null)
+    {
+        $this->sekolahId = $sekolahId;
+        $this->kelasId = $kelasId;
+    }
+
     public function title(): string
     {
         return 'Form User';
@@ -20,8 +29,8 @@ class UserTemplateExport implements WithTitle, WithHeadings, WithEvents, \Maatwe
     {
         return [
             'NAMA LENGKAP (WAJIB)',
-            'SEKOLAH (OPSIONAL)',
             'JENIS KELAMIN (L/P) (OPSIONAL)',
+            'KELAS (WAJIB JIKA TIDAK PILIH SAAT DOWNLOAD)',
             'USERNAME (OPSIONAL - KOSONGKAN UNTUK OTOMATIS)',
             'PASSWORD (OPSIONAL - KOSONGKAN UNTUK OTOMATIS)',
         ];
@@ -29,13 +38,19 @@ class UserTemplateExport implements WithTitle, WithHeadings, WithEvents, \Maatwe
 
     public function array(): array
     {
+        $kelasDefault = '';
+        if ($this->kelasId) {
+            $kelas = \App\Models\Kelas::find($this->kelasId);
+            $kelasDefault = $kelas ? $kelas->nama_kelas : '';
+        }
+
         return [
             // Contoh 1: Diisi penuh
-            ['Budi Santoso', 'SMA 1 Jakarta', 'L', 'P2026001', 'BUDI*'],
+            ['Budi Santoso', 'L', $kelasDefault ?: '8-A', 'P2026001', 'BUDI*'],
             // Contoh 2: Autogenerate
-            ['Andi Hermanto', 'SMA 2 Bandung', 'L', '', ''],
-            // Contoh 3: Autogenerate dengan Nama & Sekolah
-            ['Siti Aminah', 'SMA 3 Surabaya', 'P', '', ''],
+            ['Andi Hermanto', 'L', $kelasDefault ?: '8-B', '', ''],
+            // Contoh 3: Autogenerate dengan Nama
+            ['Siti Aminah', 'P', $kelasDefault ?: '8-A', '', ''],
         ];
     }
 
@@ -45,21 +60,41 @@ class UserTemplateExport implements WithTitle, WithHeadings, WithEvents, \Maatwe
             AfterSheet::class => function(AfterSheet $event) {
                 $sheet = $event->sheet->getDelegate();
                 
-                // Dropdown untuk Jenis Kelamin (Kolom C)
-                $validationC = $sheet->getCell('C2')->getDataValidation();
-                $validationC->setType(DataValidation::TYPE_LIST);
-                $validationC->setErrorStyle(DataValidation::STYLE_STOP);
-                $validationC->setAllowBlank(true);
-                $validationC->setShowDropDown(true);
-                $validationC->setFormula1('"L,P"');
+                // Dropdown untuk Jenis Kelamin (Kolom B)
+                $validationB = $sheet->getCell('B2')->getDataValidation();
+                $validationB->setType(DataValidation::TYPE_LIST);
+                $validationB->setErrorStyle(DataValidation::STYLE_STOP);
+                $validationB->setAllowBlank(true);
+                $validationB->setShowDropDown(true);
+                $validationB->setFormula1('"L,P"');
                 
+                // Dropdown untuk Kelas (Kolom C)
+                $validationC = null;
+                if ($this->sekolahId) {
+                    $kelasOptions = \App\Models\Kelas::where('sekolah_id', $this->sekolahId)
+                        ->pluck('nama_kelas')
+                        ->toArray();
+                    
+                    if (!empty($kelasOptions)) {
+                        $validationC = $sheet->getCell('C2')->getDataValidation();
+                        $validationC->setType(DataValidation::TYPE_LIST);
+                        $validationC->setErrorStyle(DataValidation::STYLE_STOP);
+                        $validationC->setAllowBlank(true);
+                        $validationC->setShowDropDown(true);
+                        $validationC->setFormula1('"' . implode(',', $kelasOptions) . '"');
+                    }
+                }
+
                 for ($i = 2; $i <= 500; $i++) {
-                    $sheet->getCell('C'.$i)->setDataValidation(clone $validationC);
+                    $sheet->getCell('B'.$i)->setDataValidation(clone $validationB);
+                    if ($validationC) {
+                        $sheet->getCell('C'.$i)->setDataValidation(clone $validationC);
+                    }
                 }
 
                 // Set Column Widths
                 $sheet->getColumnDimension('A')->setWidth(30);
-                $sheet->getColumnDimension('B')->setWidth(35);
+                $sheet->getColumnDimension('B')->setWidth(25);
                 $sheet->getColumnDimension('C')->setWidth(35);
                 $sheet->getColumnDimension('D')->setWidth(45);
                 $sheet->getColumnDimension('E')->setWidth(45);

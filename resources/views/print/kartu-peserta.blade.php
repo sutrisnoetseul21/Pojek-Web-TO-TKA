@@ -202,7 +202,7 @@
                 </div>
                 <div class="field-group">
                     <div class="field-label">Sekolah</div>
-                    <div class="field-value sekolah">{{ $user->sekolah ?: '—' }}</div>
+                    <div class="field-value sekolah">{{ $user->sekolahRelation->nama_sekolah ?? '—' }}</div>
                 </div>
                 <div class="divider"></div>
                 <div class="credentials-box">

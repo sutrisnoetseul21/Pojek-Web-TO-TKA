@@ -1,10 +1,20 @@
 # Status Proyek: Tryout TKA Bimbel Excellent
 
-> **Terakhir diperbarui**: 14 Maret 2026
+> **Terakhir diperbarui**: 15 Maret 2026
 
 ## 1. Pekerjaan yang Telah Selesai (Completed)
 
-### A. Konsultasi & Arsitektur
+### A. Admin Panel (Filament) - Penambahan Fitur Baru (15 Maret 2026)
+*   [x] **Dynamic Excel Template System**:
+    *   [x] **User Peserta**: Export template Excel dengan dropdown Sekolah & Kelas yang dinamis (Super Admin memilih sekolah, Admin terkunci ke sekolahnya).
+    *   [x] **Kelas**: Export template Excel per sekolah untuk manajemen kelas massal.
+    *   [x] **Robust Import Logic**: Validasi NPSN unik, penanganan duplikasi data (Skip/Log), dan filter konteks sekolah otomatis saat import.
+*   [x] **Manajemen Kartu Peserta (Kartu Login)**:
+    *   [x] **Dedicated Menu**: Menu "Kartu Peserta" terpisah untuk manajemen cetak yang lebih rapi.
+    *   [x] **In-App Preview**: Preview kartu login dengan layout A4 mockup langsung di dalam web panel.
+    *   [x] **Mass Filtering**: Cetak kartu massal per Sekolah/Kelas dengan filter canggih.
+
+### B. Konsultasi & Arsitektur
 *   [x] **Analisis Tech Stack**: Laravel 12 + FilamentPHP v3 + PostgreSQL (Prod) / MySQL (Local Docker).
 *   [x] **Desain Database**: 10+ tabel (master, bank soal, transaksi).
 *   [x] **Dokumentasi**: Folder `documentation/` diperbarui (13 file).

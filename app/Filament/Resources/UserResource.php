@@ -206,18 +206,6 @@ class UserResource extends Resource
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
-                    BulkAction::make('cetak_kartu')
-                        ->label('Cetak Kartu')
-                        ->icon('heroicon-o-printer')
-                        ->color('info')
-                        ->action(function (Collection $records) {
-                            $ids = $records->pluck('id')->implode(',');
-                            $url = route('print.kartu-peserta', ['ids' => $ids]);
-                            
-                            // Redirect ke halaman print dalam tab baru
-                            return redirect()->away($url);
-                        })
-                        ->requiresConfirmation(false),
                     Tables\Actions\DeleteBulkAction::make(),
                 ]),
             ]);

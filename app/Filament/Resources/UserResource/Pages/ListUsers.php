@@ -169,8 +169,33 @@ class ListUsers extends ListRecords
                 ->label('Template Excel')
                 ->icon('heroicon-o-document-arrow-down')
                 ->color('success')
-                ->action(function () {
-                    return Excel::download(new UserTemplateExport, 'Template_Input_User.xlsx');
+                ->form([
+                    Select::make('sekolah_id')
+                        ->label('Sekolah')
+                        ->relationship('sekolahRelation', 'nama_sekolah')
+                        ->default(fn () => auth()->user()->sekolah_id)
+                        ->disabled(fn () => auth()->user()->hasRole('admin'))
+                        ->dehydrated()
+                        ->required()
+                        ->searchable()
+                        ->preload()
+                        ->live(),
+                    Select::make('kelas_id')
+                        ->label('Kelas (Opsional)')
+                        ->options(function (Forms\Get $get) {
+                            $sekolahId = $get('sekolah_id');
+                            if (!$sekolahId) return [];
+                            return \App\Models\Kelas::where('sekolah_id', $sekolahId)
+                                ->pluck('nama_kelas', 'id');
+                        })
+                        ->searchable()
+                        ->preload()
+                        ->helperText('Jika dipilih, contoh baris di Excel akan menggunakan kelas ini.'),
+                ])
+                ->action(function (array $data) {
+                    $sekolah = \App\Models\Sekolah::find($data['sekolah_id']);
+                    $filename = ($sekolah ? $sekolah->nama_sekolah : 'Template') . ' - Template Input User.xlsx';
+                    return Excel::download(new UserTemplateExport($data['sekolah_id'], $data['kelas_id']), $filename);
                 }),
 
             Actions\Action::make('import_user')
@@ -178,6 +203,27 @@ class ListUsers extends ListRecords
                 ->icon('heroicon-o-document-arrow-up')
                 ->color('warning')
                 ->form([
+                    Select::make('sekolah_id')
+                        ->label('Target Sekolah')
+                        ->relationship('sekolahRelation', 'nama_sekolah')
+                        ->default(fn () => auth()->user()->sekolah_id)
+                        ->disabled(fn () => auth()->user()->hasRole('admin'))
+                        ->dehydrated()
+                        ->required()
+                        ->searchable()
+                        ->preload()
+                        ->live(),
+                    Select::make('kelas_id')
+                        ->label('Target Kelas Default')
+                        ->options(function (Forms\Get $get) {
+                            $sekolahId = $get('sekolah_id');
+                            if (!$sekolahId) return [];
+                            return \App\Models\Kelas::where('sekolah_id', $sekolahId)
+                                ->pluck('nama_kelas', 'id');
+                        })
+                        ->searchable()
+                        ->preload()
+                        ->helperText('Digunakan jika kolom KELAS di Excel kosong'),
                     FileUpload::make('attachment')
                         ->label('File Excel')
                         ->required()
@@ -187,7 +233,7 @@ class ListUsers extends ListRecords
                     $file = storage_path('app/public/' . $data['attachment']);
                     
                     try {
-                        Excel::import(new UserImport, $file);
+                        Excel::import(new UserImport($data['sekolah_id'], $data['kelas_id']), $file);
                         Notification::make()
                             ->title('Berhasil import User')
                             ->success()
