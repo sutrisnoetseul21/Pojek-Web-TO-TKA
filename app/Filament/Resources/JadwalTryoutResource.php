@@ -29,10 +29,8 @@ class JadwalTryoutResource extends Resource
         $query = parent::getEloquentQuery();
         $user = auth()->user();
 
-        if ($user->isAdmin() && $user->jenjang) {
-            $query->whereHas('paketTryout', function ($q) use ($user) {
-                $q->where('jenjang', '=', $user->jenjang);
-            });
+        if ($user->isAdmin() && $user->sekolah_id) {
+            $query->where('sekolah_id', $user->sekolah_id);
         }
 
         return $query;
@@ -53,13 +51,40 @@ class JadwalTryoutResource extends Resource
                 Forms\Components\Section::make('Informasi Jadwal')
                     ->description('Tentukan waktu pelaksanaan tryout')
                     ->schema([
+                        Forms\Components\Select::make('sekolah_id')
+                            ->label('Sekolah')
+                            ->relationship('sekolah', 'nama_sekolah')
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->live()
+                            ->disabled(fn () => auth()->user()->isAdmin())
+                            ->dehydrated()
+                            ->default(fn () => auth()->user()->sekolah_id)
+                            ->afterStateUpdated(fn (Forms\Set $set) => $set('paket_tryout_id', null))
+                            ->afterStateUpdated(fn (Forms\Set $set) => $set('kelases', [])),
                         Forms\Components\Select::make('paket_tryout_id')
                             ->label('Paket Tryout')
-                            ->options(PaketTryout::where('is_active', true)->pluck('nama_paket', 'id'))
+                            ->options(function (Forms\Get $get) {
+                                $sekolahId = $get('sekolah_id');
+                                return PaketTryout::where('is_active', true)
+                                    ->where(function ($q) use ($sekolahId) {
+                                        $q->whereNull('sekolah_id')
+                                          ->when($sekolahId, fn ($query) => $query->orWhere('sekolah_id', $sekolahId));
+                                    })
+                                    ->pluck('nama_paket', 'id');
+                            })
                             ->searchable()
                             ->required()
-                            ->columnSpanFull()
                             ->helperText('Pilih paket tryout yang akan dijadwalkan'),
+                        Forms\Components\Select::make('kelases')
+                            ->label('Target Kelas')
+                            ->relationship('kelases', 'nama_kelas', modifyQueryUsing: fn (Builder $query, Forms\Get $get) => $query->where('sekolah_id', $get('sekolah_id')))
+                            ->multiple()
+                            ->required()
+                            ->preload()
+                            ->searchable()
+                            ->helperText('Pilih satu atau lebih kelas yang wajib mengikuti jadwal ini'),
                         Forms\Components\TextInput::make('nama_sesi')
                             ->label('Nama Sesi')
                             ->placeholder('Contoh: Sesi 1 - Pagi')
@@ -101,6 +126,14 @@ class JadwalTryoutResource extends Resource
                     ->label('Paket Tryout')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('sekolah.nama_sekolah')
+                    ->label('Sekolah')
+                    ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('kelases.nama_kelas')
+                    ->label('Kelas')
+                    ->badge()
+                    ->separator(', '),
                 Tables\Columns\TextColumn::make('nama_sesi')
                     ->label('Sesi')
                     ->searchable(),

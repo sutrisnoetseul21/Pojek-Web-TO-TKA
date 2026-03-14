@@ -65,10 +65,12 @@ class UserAdminResource extends Resource
                             ->label('Hak Akses Admin')
                             ->relationship('permissions', 'name')
                             ->getOptionLabelFromRecordUsing(fn ($record) => match ($record->name) {
-                                'manage_peserta' => '👥 Kelola Kelas dan Peserta',
-                                'manage_soal'    => '📝 Kelola Bank Soal (Mapel, Paket, Soal, Stimulus)',
-                                'manage_ujian'   => '🏆 Kelola TRYOUT (Paket Tryout, Jadwal)',
-                                default          => $record->name,
+                                'manage_peserta'    => '👥 Kelola Kelas dan Peserta',
+                                'manage_soal'       => '📝 Kelola Bank Soal (Mapel, Paket, Soal, Stimulus)',
+                                'manage_ujian'      => '🏆 Kelola TRYOUT (Paket Tryout, Jadwal)',
+                                'manage_monitoring' => '🔍 Kelola Monitoring Ujian',
+                                'manage_laporan'    => '📊 Kelola Laporan & Hasil',
+                                default             => $record->name,
                             })
                             ->required()
                             ->columns(1)

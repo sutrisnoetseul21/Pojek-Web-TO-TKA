@@ -12,6 +12,7 @@ class PaketTryout extends Model
     protected $table = 'paket_tryout';
 
     protected $fillable = [
+        'sekolah_id',
         'nama_paket',
         'deskripsi',
         'jenjang',
@@ -20,8 +21,15 @@ class PaketTryout extends Model
     ];
 
     protected $casts = [
+        'sekolah_id' => 'integer',
         'is_active' => 'boolean',
     ];
+
+    // Relasi ke sekolah
+    public function sekolah()
+    {
+        return $this->belongsTo(Sekolah::class, 'sekolah_id');
+    }
 
     // Relasi ke mapel-mapel dalam paket
     public function mapelItems()

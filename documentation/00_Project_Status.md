@@ -16,7 +16,12 @@
 
 ### C. Admin Panel (FilamentPHP)
 *   [x] **Bank Soal & Stimulus**: Form dinamis, Repeater jawaban, Excel Import/Export wacana.
-*   [x] **Paket Tryout**: Cascading dropdown, mode Acak/Manual.
+*   [x] **Paket Tryout**: 
+    *   [x] Cascading dropdown, mode Acak/Manual.
+    *   [x] **School Association**: Paket kini bisa dikunci ke sekolah tertentu.
+*   [x] **Jadwal Tryout**:
+    *   [x] **Target Sekolah & Kelas**: Penjadwalan kini membidik sekolah dan kelas spesifik.
+    *   [x] **Auto-Assignment**: Siswa otomatis terdaftar ke jadwal berdasarkan kelas yang dipilih.
 *   [x] **User & Role Overhaul**:
     *   [x] Implementasi `super_admin` & `admin` berbasis Jenjang & Sekolah.
     *   [x] **Jenjang Consistency**: Locking jenjang Kelas berdasarkan Sekolah.
@@ -25,6 +30,14 @@
     *   [x] **Jenjang Filtering**: Filter otomatis Mata Pelajaran berdasarkan jenjang admin.
     *   [x] **UX Optimization**: Redirect to index, Sticky footer, Sticky save buttons.
     *   [x] **Audit Log**: Integrasi Spatie Activitylog.
+*   [x] **Monitoring Ujian (4 Menu)**:
+    *   [x] **Peserta Sedang Tes**: Monitoring real-time dengan polling & force submit.
+    *   [x] **Monitoring Sesi**: Ringkasan statistik sesi.
+    *   [x] **Log Aktivitas**: Record detail aktivitas per peserta.
+    *   [x] **Bantuan Peserta**: Reset sesi, izin login, tambah waktu.
+*   [x] **Laporan / Hasil (2 Menu)**:
+    *   [x] **Hasil Sementara**: Pantau progres jawaban & nilai real-time.
+    *   [x] **Hasil Tryout**: Laporan akhir lengkap + Ranking.
 
 ### D. Student Portal (Halaman Ujian)
 ... (tetap)

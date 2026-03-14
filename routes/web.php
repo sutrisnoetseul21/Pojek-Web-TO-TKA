@@ -4,7 +4,7 @@ use App\Http\Controllers\KartuPesertaController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    return redirect('/tryout/login');
 });
 
 // Cetak Kartu Peserta - Protected by middleware auth

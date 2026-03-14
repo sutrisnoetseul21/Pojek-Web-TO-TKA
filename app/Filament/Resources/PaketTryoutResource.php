@@ -31,7 +31,13 @@ class PaketTryoutResource extends Resource
         $user = auth()->user();
 
         if ($user->isAdmin() && $user->jenjang) {
-            $query->where(fn (Builder $query) => $query->where('jenjang', '=', $user->jenjang));
+            $query->where(function (Builder $query) use ($user) {
+                $query->where('jenjang', '=', $user->jenjang)
+                    ->where(function ($q) use ($user) {
+                        $q->whereNull('sekolah_id') // Global
+                          ->orWhere('sekolah_id', $user->sekolah_id); // Specific to school
+                    });
+            });
         }
 
         return $query;
@@ -49,15 +55,23 @@ class PaketTryoutResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Informasi Paket')
-                    ->description('Informasi dasar paket tryout')
+                Forms\Components\Section::make('Keterangan Paket & Sekolah')
+                    ->description('Tentukan sekolah dan informasi dasar paket tryout')
                     ->schema([
+                        Forms\Components\Select::make('sekolah_id')
+                            ->label('Sekolah (Opsional)')
+                            ->relationship('sekolah', 'nama_sekolah')
+                            ->searchable()
+                            ->preload()
+                            ->hint('Kosongkan jika paket bersifat GLOBAL/Nasional')
+                            ->disabled(fn () => auth()->user()->isAdmin())
+                            ->dehydrated()
+                            ->default(fn () => auth()->user()->sekolah_id),
                         Forms\Components\TextInput::make('nama_paket')
                             ->label('Nama Paket Tryout')
                             ->placeholder('Contoh: TRYOUT AKBAR TKA 1')
                             ->required()
-                            ->maxLength(255)
-                            ->columnSpan(2),
+                            ->maxLength(255),
                         Forms\Components\Textarea::make('deskripsi')
                             ->label('Deskripsi')
                             ->placeholder('Deskripsi singkat tentang paket tryout ini...')
@@ -252,6 +266,11 @@ class PaketTryoutResource extends Resource
                         'warning' => 'SMA',
                         'primary' => 'UMUM',
                     ]),
+                Tables\Columns\TextColumn::make('sekolah.nama_sekolah')
+                    ->label('Sekolah')
+                    ->placeholder('GLOBAL')
+                    ->sortable()
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('mapel_items_count')
                     ->label('Mapel')
                     ->counts('mapelItems')
