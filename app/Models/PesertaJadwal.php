@@ -39,6 +39,12 @@ class PesertaJadwal extends Model
         return $this->belongsTo(JadwalTryout::class);
     }
 
+    // Relasi ke jawaban peserta
+    public function jawabanPeserta()
+    {
+        return $this->hasMany(JawabanPeserta::class);
+    }
+
     // Scope: yang sudah selesai
     public function scopeCompleted($query)
     {

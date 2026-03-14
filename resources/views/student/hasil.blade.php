@@ -83,26 +83,41 @@
                                 $skor = 0;
                                 if ($soal) {
                                     $jawabanSoal = $soal->jawaban ?? collect();
-                                    if (is_array($j->jawaban)) {
-                                        if ($soal->tipe_soal === 'BENAR_SALAH') {
+                                    $userJawaban = $j->jawaban;
+
+                                    if ($soal->tipe_soal === 'BENAR_SALAH') {
+                                        if (is_array($userJawaban)) {
                                             foreach ($jawabanSoal as $opsi) {
-                                                $ans = $j->jawaban[$opsi->id] ?? null;
-                                                if ($ans && strtoupper($ans) === strtoupper($opsi->kunci_jawaban)) {
-                                                    $skor += $opsi->skor ?? 0;
+                                                $ansUser = strtoupper($userJawaban[$opsi->id] ?? '');
+                                                $kunci = strtoupper($opsi->kunci_jawaban ?? '');
+
+                                                if ($kunci) {
+                                                    if ($ansUser === $kunci) {
+                                                        $skor += $opsi->skor ?? 0;
+                                                    }
+                                                } else {
+                                                    // Fallback logic
+                                                    if ($opsi->skor > 0 && $ansUser === 'BENAR') {
+                                                        $skor += $opsi->skor;
+                                                    }
                                                 }
                                             }
-                                        } else {
-                                            // PG_KOMPLEKS
-                                            foreach ($j->jawaban as $uid) {
+                                        }
+                                    } elseif ($soal->tipe_soal === 'PG_KOMPLEKS') {
+                                        if (is_array($userJawaban)) {
+                                            foreach ($userJawaban as $uid) {
                                                 $found = $jawabanSoal->firstWhere('id', (int) $uid);
-                                                if ($found)
+                                                if ($found) {
                                                     $skor += $found->skor ?? 0;
+                                                }
                                             }
                                         }
                                     } else {
-                                        $found = $jawabanSoal->firstWhere('id', (int) $j->jawaban);
-                                        if ($found)
+                                        // PG_TUNGGAL or others
+                                        $found = $jawabanSoal->firstWhere('id', (int) $userJawaban);
+                                        if ($found) {
                                             $skor = $found->skor ?? 0;
+                                        }
                                     }
                                 }
                             @endphp

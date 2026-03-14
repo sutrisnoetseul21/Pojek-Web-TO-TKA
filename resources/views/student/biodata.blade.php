@@ -14,7 +14,7 @@
                             d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                     </svg>
                 </div>
-                <h2 class="info-title">Selamat Datang, {{ Auth::user()->username }}</h2>
+                <h2 class="info-title">Selamat Datang, {{ Auth::user()->nama_lengkap ?? Auth::user()->username }}</h2>
                 <p class="info-text">Silakan lengkapi data diri Anda dan masukkan token tryout yang diberikan oleh pengawas.
                 </p>
 
@@ -89,9 +89,10 @@
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label">Asal Sekolah <span class="required">*</span></label>
-                        <input type="text" name="sekolah" class="form-input" placeholder="Nama sekolah"
-                            value="{{ old('sekolah', $user->sekolah) }}" required>
+                        <label class="form-label">Asal Sekolah</label>
+                        <input type="text" name="sekolah" class="form-input readonly" 
+                            value="{{ $user->sekolahRelation->nama_sekolah ?? $user->sekolah }}" readonly>
+                        <small class="form-hint">Data sekolah sudah dipatenkan sesuai akun Anda</small>
                     </div>
 
                     <hr class="divider">

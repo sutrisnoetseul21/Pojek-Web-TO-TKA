@@ -229,7 +229,7 @@ class BankSoalResource extends Resource
                                                 'SALAH' => 'Salah',
                                             ])
                                             ->live()
-                                            ->afterStateUpdated(fn($state, Forms\Set $set) => $set('skor', $state === 'BENAR' ? 1 : 0))
+                                            ->afterStateUpdated(fn($state, Forms\Set $set) => $set('skor', 1))
                                             ->visible(fn(Forms\Get $get) => $get('../../tipe_soal') === 'BENAR_SALAH')
                                             ->columnSpan(3),
 

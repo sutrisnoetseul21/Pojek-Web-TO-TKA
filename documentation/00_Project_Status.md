@@ -40,7 +40,12 @@
     *   [x] **Hasil Tryout**: Laporan akhir lengkap + Ranking.
 
 ### D. Student Portal (Halaman Ujian)
-... (tetap)
+*   [x] **UI Personalization**: Nama lengkap kini ditampilkan di semua header (Ujian, Biodata, Hasil) menggantikan username.
+*   [x] **Robust Scoring Logic**:
+    *   [x] Perbaikan skor **Benar-Salah** (mendukung identifikasi "Salah" dengan poin default 1).
+    *   [x] Sinkronisasi logika skor antara Backend (Controller) dan Frontend (Blade).
+    *   [x] Penanganan fallback jika kunci jawaban di database bernilai null.
+*   [x] **Persistence**: Reset sesi & tambah waktu via Admin Panel.
 
 ---
 
@@ -58,6 +63,9 @@
 | Field Name Default | `name` made Nullable | Fix error saat create Admin/User |
 | Filament Avatar | `getNameAttribute` accessor | Fix TypeError `getUserName` null |
 | Unique Mapel | Composite Unique `kode` + `jenjang` | Fix duplikasi kode mapel antar jenjang |
+| BS Scoring Fix | Default `skor` = 1 for "SALAH" | Fix poin 0 pada identifikasi Salah di BS |
+| Hasil Tryout Crash | `nilai_akhir` -> `total_nilai` | Fix SQL error di Laporan Hasil Tryout |
+| Missing Relationship | added `jawabanPeserta` in Model | Fix crash pada Hasil Sementara |
 
 ---
 
@@ -70,5 +78,7 @@
 
 ### Prioritas Menengah
 4.  **Math Editor**: Integrasi MathJax/KaTeX.
-5.  **Randomization**: SHuffle urutan soal per siswa.
+5.  **Randomization**: Shuffle urutan soal per siswa.
 6.  **Export Hasil**: Export CSV/PDF hasil tryout.
+7.  **Sistem Penilaian**: Perhitungan total_nilai yang lebih presisi (Selesai).
+8.  **Timer Auto-submit**: Submit otomatis saat waktu habis (Selesai).

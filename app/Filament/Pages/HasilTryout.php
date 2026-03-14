@@ -123,21 +123,20 @@ class HasilTryout extends Page implements HasForms, HasTable
                     ->sortable(),
                 TextColumn::make('user.kelas.nama_kelas')
                     ->label('Kelas'),
-                TextColumn::make('skor_total')
+                TextColumn::make('total_nilai')
                     ->label('Skor')
                     ->sortable()
-                    ->alignRight()
-                    ->getStateUsing(fn($record) => $record->nilai_akhir ?? 0), // Assuming there's a nilai_akhir column or logic
+                    ->alignRight(),
                 TextColumn::make('stats')
                     ->label('B / S / K')
-                    ->getStateUsing(fn($record) => ($record->jumlah_benar ?? 0) . ' / ' . ($record->jumlah_salah ?? 0) . ' / ' . ($record->jumlah_kosong ?? 0))
+                    ->getStateUsing(fn($record) => 'N/A')
                     ->alignCenter(),
                 TextColumn::make('waktu_selesai')
                     ->label('Waktu Submit')
                     ->dateTime('d/m/Y H:i')
                     ->sortable(),
             ])
-            ->defaultSort('nilai_akhir', 'desc')
+            ->defaultSort('total_nilai', 'desc')
             ->filters([])
             ->actions([
                 Action::make('detail_hasil')
@@ -157,9 +156,9 @@ class HasilTryout extends Page implements HasForms, HasTable
             ->whereIn('status', ['completed', 'timeout']);
             
         return [
-            'avg' => round($query->avg('nilai_akhir') ?? 0, 2),
-            'max' => $query->max('nilai_akhir') ?? 0,
-            'min' => $query->min('nilai_akhir') ?? 0,
+            'avg' => round($query->avg('total_nilai') ?? 0, 2),
+            'max' => $query->max('total_nilai') ?? 0,
+            'min' => $query->min('total_nilai') ?? 0,
             'count' => $query->count(),
         ];
     }

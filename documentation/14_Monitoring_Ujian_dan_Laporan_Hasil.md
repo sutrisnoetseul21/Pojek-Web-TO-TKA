@@ -1,7 +1,7 @@
 # Dokumentasi Fitur: Monitoring Ujian & Laporan Hasil
 
 > **Tanggal**: 14 Maret 2026
-> **Status**: Selesai (Completed)
+> **Status**: Selesai (Completed - Updated)
 
 ## 1. Ringkasan
 
@@ -104,9 +104,10 @@ Kolom: Nama, Kelas, Sekolah, Status Ujian, Waktu Mulai, Sisa Waktu, Riwayat Bant
 Kolom: Nama, Kelas, Soal Terjawab, Belum Dijawab, Status, Waktu Mulai, Nilai Sementara
 
 ### Hasil Tryout
-Kolom: Nama, Kelas, Sekolah, Total Nilai, Ranking, Benar, Salah, Kosong, Waktu, Status
-Rekap: Per Kelas, Per Sekolah, Tertinggi, Terendah, Rata-rata
+Kolom: Nama, Kelas, Sekolah, Skor (total_nilai), Ranking, Waktu Submit, Status.
+Fitur: Ranking otomatis berdasarkan `total_nilai` tertinggi, statistik rata-rata, nilai tertinggi, dan nilai terendah.
+*Catatan: Kolom detail B/S/K saat ini diset placeholder 'N/A' menunggu implementasi kolom summary di DB.*
 
 ---
 
-*Dokumentasi ini akan diperbarui setelah implementasi selesai.*
+*Update 14 Maret 2026: Semua menu telah diimplementasikan dan diverifikasi stabil. Masalah nama kolom `nilai_akhir` telah diperbaiki menjadi `total_nilai`.*

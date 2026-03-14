@@ -662,6 +662,82 @@
             transform: translateY(-2px);
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
         }
+
+        /* Mobile Responsiveness */
+        @media (max-width: 768px) {
+            .header {
+                padding: 0.5rem 0.75rem;
+                flex-wrap: wrap;
+                gap: 0.5rem;
+            }
+
+            .header-left {
+                gap: 0.5rem;
+            }
+
+            .soal-nomor {
+                font-size: 0.875rem;
+            }
+
+            .logo {
+                width: 28px;
+                height: 28px;
+            }
+
+            .timer {
+                font-size: 0.9rem;
+                padding: 0.25rem 0.5rem;
+            }
+
+            .mapel-badge-header {
+                display: none;
+            }
+
+            .main-content {
+                flex-direction: column;
+                overflow-y: auto;
+            }
+
+            .panel {
+                flex: none;
+                overflow-y: visible;
+                padding: 0.75rem;
+            }
+
+            .panel-stimulus {
+                border-right: none;
+                border-bottom: 3px solid #e5e7eb;
+            }
+
+            .panel-content {
+                padding: 1rem;
+            }
+
+            .footer {
+                padding: 0.5rem;
+                gap: 0.375rem;
+            }
+
+            .nav-btn {
+                padding: 0.5rem 0.75rem;
+                font-size: 0.75rem;
+                flex: 1;
+                justify-content: center;
+            }
+
+            .nav-btn span {
+                display: none; /* Hide long button labels if any */
+            }
+
+            .modal {
+                width: 95%;
+                padding: 1rem;
+            }
+
+            .soal-grid {
+                grid-template-columns: repeat(5, 1fr);
+            }
+        }
     </style>
 </head>
 
@@ -685,6 +761,10 @@
             </div>
         </div>
         <div class="header-right">
+            <div class="user-info" style="text-align: right; margin-right: 0.5rem; display: flex; flex-direction: column;">
+                <span style="font-size: 0.85rem; font-weight: 700;">{{ Auth::user()->nama_lengkap }}</span>
+                <span style="font-size: 0.7rem; opacity: 0.8;">{{ Auth::user()->username }}</span>
+            </div>
             <div class="timer" id="timer">00:00</div>
             <span class="mapel-badge-header">{{ $paket->nama_paket }}</span>
             <button class="info-btn" onclick="toggleDaftarSoal()">Daftar Soal</button>
@@ -726,24 +806,24 @@
     <!-- Footer -->
     <footer class="footer">
         <button class="nav-btn nav-btn-prev" id="btnPrev" onclick="prevSoal()">
-            ‹ Soal sebelumnya
+            ‹ <span class="hidden md:inline">Soal sebelumnya</span><span class="md:hidden">Sblm</span>
         </button>
 
         <button class="nav-btn nav-btn-ragu" id="btnRagu" onclick="toggleRagu()">
-            🚩 Ragu-ragu
+            🚩 <span class="hidden md:inline">Ragu-ragu</span><span class="md:hidden">Ragu</span>
         </button>
 
         <button class="nav-btn nav-btn-next" id="btnNext" onclick="nextSoal()">
-            Soal berikutnya ›
+            <span class="hidden md:inline">Soal berikutnya</span><span class="md:hidden">Lanjt</span> ›
         </button>
 
         <button class="nav-btn nav-btn-lanjut-mapel" id="btnLanjutMapel" onclick="lanjutMapel()" style="display:none;">
-            Lanjut Mapel Berikutnya ▸
+            Lanjt Mapel ▸
         </button>
 
         <a class="nav-btn nav-btn-selesai" id="btnSelesai" href="{{ route('tryout.selesai', $pesertaJadwal) }}"
             style="display:none; text-decoration:none;">
-            ✅ Selesai & Kumpulkan
+            ✅ Selesai
         </a>
     </footer>
 

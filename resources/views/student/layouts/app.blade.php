@@ -314,7 +314,7 @@
             
             @auth
             <div class="header-right">
-                <span>{{ Auth::user()->username }}</span>
+                <span class="user-name">{{ Auth::user()->nama_lengkap ?? Auth::user()->username }}</span>
                 <form action="{{ route('tryout.logout') }}" method="POST" style="display: inline;">
                     @csrf
                     <button type="submit" class="logout-btn">Logout</button>

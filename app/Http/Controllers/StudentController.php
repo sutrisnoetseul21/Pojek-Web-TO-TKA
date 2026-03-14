@@ -85,10 +85,7 @@ class StudentController extends Controller
         $user = Auth::user();
 
         $request->validate([
-            'nama_lengkap' => 'required|string|max:255',
-            'tempat_lahir' => 'required|string|max:255',
             'tanggal_lahir' => 'required|date',
-            'sekolah' => 'required|string|max:255',
             'jenis_kelamin' => 'required|in:L,P',
             'token' => 'required|string|size:6',
         ]);
@@ -143,7 +140,7 @@ class StudentController extends Controller
             'nama_lengkap' => $request->nama_lengkap,
             'tempat_lahir' => $request->tempat_lahir,
             'tanggal_lahir' => $request->tanggal_lahir,
-            'sekolah' => $request->sekolah,
+            'sekolah' => $user->sekolahRelation->nama_sekolah ?? $user->sekolah,
             'jenis_kelamin' => $request->jenis_kelamin,
             'is_biodata_complete' => true,
         ]);
@@ -377,16 +374,11 @@ class StudentController extends Controller
             $userJawaban = is_string($j->jawaban) ? json_decode($j->jawaban, true) : $j->jawaban;
 
             // Logic scoring per tipe soal
-            if ($soal->tipe_soal === 'PG') {
+            if ($soal->tipe_soal === 'PG_TUNGGAL' || $soal->tipe_soal === 'PG') {
                 // Single Answer: Cari opsi yang dipilih user dan ambil skornya
                 $opsi = $soal->jawaban->where('id', $userJawaban)->first();
                 if ($opsi) {
-                    // Jika kunci jawaban ada di opsi (skor > 0 atau kunci 'BENAR'), tambahkan skor
-                    // Prioritas skor dari tabel bank_jawaban
                     $totalNilai += $opsi->skor ?? 0;
-
-                    // Fallback: jika skor 0 tapi ini kunci jawaban, gunakan bobot soal (jika sistem bobot per soal)
-                    // Tapi user request point per opsi, jadi kita stick to opsi->skor
                 }
             } elseif ($soal->tipe_soal === 'PG_KOMPLEKS') {
                 // Multiple Answer: Sum skor dari opsi yang dipilih
@@ -399,13 +391,27 @@ class StudentController extends Controller
                 // Scoring: Cek setiap baris jawaban (sub-soal)
                 if (is_array($userJawaban)) {
                     foreach ($soal->jawaban as $opsi) {
-                        // Ambil jawaban user untuk opsi ini
-                        // User jawaban key bisa berupa string ID
                         $jawabanUser = $userJawaban[$opsi->id] ?? null;
 
-                        // Normalisasi jawaban (case insensitive)
-                        if ($jawabanUser && strtoupper($jawabanUser) === strtoupper($opsi->kunci_jawaban)) {
-                            $totalNilai += $opsi->skor ?? 0;
+                        if ($jawabanUser) {
+                            $jawabanUser = strtoupper($jawabanUser);
+                            $kunci = strtoupper($opsi->kunci_jawaban ?? '');
+
+                            // Jika kunci eksplisit ada, bandingkan
+                            if ($kunci) {
+                                if ($jawabanUser === $kunci) {
+                                    $totalNilai += $opsi->skor ?? 0;
+                                }
+                            } else {
+                                // Fallback: Jika kunci null, asumsikan skor > 0 berarti kuncinya BENAR
+                                if ($opsi->skor > 0 && $jawabanUser === 'BENAR') {
+                                    $totalNilai += $opsi->skor;
+                                } elseif ($opsi->skor == 0 && $jawabanUser === 'SALAH') {
+                                    // Untuk BS, jika skor 0 dan user jawab SALAH, apakah ada poin? 
+                                    // Tergantung setup, tapi sementara ikuti skor yang ada di opsi.
+                                    $totalNilai += $opsi->skor; 
+                                }
+                            }
                         }
                     }
                 }
