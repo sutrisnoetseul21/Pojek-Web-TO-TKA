@@ -55,7 +55,16 @@ class BankStimulusResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Select::make('mapel_id')
-                    ->options(\App\Models\RefMapel::all()->mapWithKeys(fn($m) => [$m->id => "{$m->nama_mapel} - {$m->jenjang}"]))
+                    ->options(function () {
+                        $user = auth()->user();
+                        $query = \App\Models\RefMapel::query();
+
+                        if ($user->isAdmin() && $user->jenjang) {
+                            $query->where('jenjang', $user->jenjang);
+                        }
+
+                        return $query->get()->mapWithKeys(fn($m) => [$m->id => "{$m->nama_mapel} - {$m->jenjang}"]);
+                    })
                     ->searchable()
                     ->preload()
                     ->required()

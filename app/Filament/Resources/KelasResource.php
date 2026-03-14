@@ -59,6 +59,15 @@ class KelasResource extends Resource
                             ->searchable()
                             ->preload()
                             ->required()
+                            ->live()
+                            ->afterStateUpdated(function ($state, Forms\Set $set) {
+                                if ($state) {
+                                    $sekolah = \App\Models\Sekolah::find($state);
+                                    if ($sekolah) {
+                                        $set('jenjang', $sekolah->jenjang);
+                                    }
+                                }
+                            })
                             ->createOptionForm([
                                 Forms\Components\TextInput::make('nama_sekolah')
                                     ->required()
@@ -78,7 +87,7 @@ class KelasResource extends Resource
                             )
                             ->required()
                             ->default(fn () => auth()->user()->jenjang)
-                            ->disabled(fn () => auth()->user()->hasRole('admin') && auth()->user()->jenjang)
+                            ->disabled()
                             ->dehydrated(),
                         Forms\Components\TextInput::make('nama_kelas')
                             ->label('Nama Kelas')

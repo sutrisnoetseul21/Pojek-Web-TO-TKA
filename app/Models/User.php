@@ -19,6 +19,16 @@ class User extends Authenticatable implements FilamentUser
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable, HasRoles, LogsActivity, SoftDeletes;
 
+    protected static function booted()
+    {
+        static::saved(function (User $user) {
+            if ($user->role === 'admin' && $user->manage_all_kelas && $user->sekolah_id) {
+                $kelasIds = \App\Models\Kelas::where('sekolah_id', $user->sekolah_id)->pluck('id');
+                $user->kelases()->sync($kelasIds);
+            }
+        });
+    }
+
     /**
      * The attributes that are mass assignable.
      *
@@ -42,6 +52,7 @@ class User extends Authenticatable implements FilamentUser
         'sekolah_id',
         'kelas_id',
         'nomor_peserta',
+        'manage_all_kelas',
     ];
 
     /**
@@ -74,6 +85,7 @@ class User extends Authenticatable implements FilamentUser
             'password' => 'hashed',
             'tanggal_lahir' => 'date',
             'is_biodata_complete' => 'boolean',
+            'manage_all_kelas' => 'boolean',
         ];
     }
 
@@ -200,7 +212,7 @@ class User extends Authenticatable implements FilamentUser
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['username', 'email', 'role', 'nama_lengkap', 'sekolah_id', 'kelas_id', 'nomor_peserta'])
+            ->logOnly(['username', 'email', 'role', 'nama_lengkap', 'sekolah_id', 'kelas_id', 'nomor_peserta', 'manage_all_kelas'])
             ->logOnlyDirty();
     }
 }

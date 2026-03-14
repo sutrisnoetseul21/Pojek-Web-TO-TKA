@@ -16,6 +16,7 @@ class RolePermissionSeeder extends Seeder
         // Create Permissions
         Permission::firstOrCreate(['name' => 'manage_soal']);
         Permission::firstOrCreate(['name' => 'manage_peserta']);
+        Permission::firstOrCreate(['name' => 'manage_ujian']);
 
         // Create Roles
         $superAdmin = Role::firstOrCreate(['name' => 'super_admin']);

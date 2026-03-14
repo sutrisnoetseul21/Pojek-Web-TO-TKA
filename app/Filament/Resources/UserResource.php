@@ -62,9 +62,11 @@ class UserResource extends Resource
                             ->unique(ignoreRecord: true)
                             ->disabled(fn($record) => $record !== null),
                         Forms\Components\TextInput::make('plain_password')
-                            ->label('Password (Plain)')
-                            ->disabled()
-                            ->helperText('Password tidak bisa dirubah untuk keamanan'),
+                            ->label('Password')
+                            ->password()
+                            ->revealable()
+                            ->placeholder('Kosongkan untuk generate otomatis')
+                            ->helperText('Jika dikosongkan saat tambah user, password akan digenerate otomatis'),
                         Forms\Components\Hidden::make('role')
                             ->default('peserta'),
                     ])->columns(['default' => 3]),

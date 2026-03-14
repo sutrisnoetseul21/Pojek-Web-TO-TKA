@@ -63,10 +63,13 @@ class UserAdminResource extends Resource
                     ->schema([
                         Forms\Components\CheckboxList::make('permissions')
                             ->label('Hak Akses Admin')
-                            ->options([
-                                'manage_soal'    => '📝 Kelola Soal (Mapel, Paket, Bank Soal, Stimulus, Tryout, Jadwal)',
-                                'manage_peserta' => '👥 Kelola Peserta (User Peserta, Sekolah, Kelas, Cetak Kartu)',
-                            ])
+                            ->relationship('permissions', 'name')
+                            ->getOptionLabelFromRecordUsing(fn ($record) => match ($record->name) {
+                                'manage_peserta' => '👥 Kelola Kelas dan Peserta',
+                                'manage_soal'    => '📝 Kelola Bank Soal (Mapel, Paket, Soal, Stimulus)',
+                                'manage_ujian'   => '🏆 Kelola TRYOUT (Paket Tryout, Jadwal)',
+                                default          => $record->name,
+                            })
                             ->required()
                             ->columns(1)
                             ->helperText('Centang satu atau lebih hak akses untuk admin ini'),
@@ -101,8 +104,25 @@ class UserAdminResource extends Resource
                     ])->columns(2),
 
                 Forms\Components\Section::make('Penugasan Kelas')
-                    ->description('Pilih kelas yang bisa dikelola oleh admin ini')
+                    ->description('Tentukan bagaimana admin ini mengelola kelas')
                     ->schema([
+                        Forms\Components\ToggleButtons::make('manage_all_kelas')
+                            ->label('Mode Penugasan Kelas')
+                            ->options([
+                                true => 'Ikuti semua kelas di sekolah',
+                                false => 'Pilih kelas tertentu',
+                            ])
+                            ->colors([
+                                true => 'success',
+                                false => 'primary',
+                            ])
+                            ->icons([
+                                true => 'heroicon-o-check-circle',
+                                false => 'heroicon-o-list-bullet',
+                            ])
+                            ->default(false)
+                            ->live()
+                            ->required(),
                         Forms\Components\CheckboxList::make('kelases')
                             ->label('Kelas yang Dikelola')
                             ->relationship('kelases', 'nama_kelas', modifyQueryUsing: function (Builder $query, Forms\Get $get) {
@@ -111,6 +131,8 @@ class UserAdminResource extends Resource
                                 }
                                 return $query;
                             })
+                            ->visible(fn(Forms\Get $get) => $get('manage_all_kelas') == false)
+                            ->required(fn(Forms\Get $get) => $get('manage_all_kelas') == false)
                             ->searchable()
                             ->columns(3)
                             ->helperText('Hanya menampilkan kelas dari sekolah yang dipilih di atas'),
@@ -150,7 +172,9 @@ class UserAdminResource extends Resource
                     ->separator(','),
                 Tables\Columns\TextColumn::make('kelases_count')
                     ->label('Jml Kelas')
-                    ->counts('kelases')
+                    ->state(function (User $record) {
+                        return $record->manage_all_kelas ? 'Semua' : $record->kelases()->count();
+                    })
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()

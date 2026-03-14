@@ -25,6 +25,12 @@ Admin hanya memiliki akses ke data di satu sekolah. Nama sekolah ini ditetapkan 
 - Admin dapat melihat, menambah, dan mengedit data peserta (siswa) di sekolahnya.
 - **Auto-Filter Kelas**: Pilihan kelas saat menambah peserta otomatis disaring hanya untuk kelas yang ada di sekolah Admin.
 - **Auto-Generate Nomor Peserta**: Nomor peserta dibuat otomatis dengan format: `[KODE_SEKOLAH]-[KODE_KELAS]-[NOMOR_URUT]`.
+- **Penyaringan Mata Pelajaran**: Saat mengelola bank soal, admin hanya akan melihat Mata Pelajaran yang sesuai dengan jenjang sekolahnya (SD/SMP/SMA/SMK).
+
+### D. Otoritas Kelas Otomatis
+Admin dapat disetel ke mode **"Ikuti semua kelas di sekolah"**. Jika aktif:
+- Admin otomatis mengelola seluruh kelas di sekolah tersebut.
+- Setiap ada kelas baru yang dibuat, Admin akan otomatis memiliki akses tanpa perlu didaftarkan ulang oleh Super Admin.
 
 ---
 

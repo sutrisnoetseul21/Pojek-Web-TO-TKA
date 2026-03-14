@@ -10,6 +10,7 @@ use Filament\Actions;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms;
 use Filament\Notifications\Notification;
 use Filament\Resources\Pages\ListRecords;
 use Illuminate\Support\Facades\Hash;
@@ -88,56 +89,80 @@ class ListUsers extends ListRecords
                         ->minValue(1)
                         ->maxValue(1000)
                         ->helperText('Maksimal 1000 user per batch'),
+                    Select::make('sekolah_id')
+                        ->label('Sekolah')
+                        ->options(\App\Models\Sekolah::pluck('nama_sekolah', 'id'))
+                        ->required()
+                        ->searchable()
+                        ->preload()
+                        ->live()
+                        ->visible(fn() => auth()->user()->hasRole('super_admin'))
+                        ->afterStateUpdated(fn($set) => $set('kelas_id', null)),
+                    Select::make('kelas_id')
+                        ->label('Kelas')
+                        ->options(function (Forms\Get $get) {
+                            $user = auth()->user();
+                            $query = \App\Models\Kelas::query();
+                            
+                            if ($user->hasRole('super_admin')) {
+                                $sekolahId = $get('sekolah_id');
+                                if (!$sekolahId) return [];
+                                $query->where('sekolah_id', $sekolahId);
+                            } elseif ($user->hasRole('admin') && $user->sekolah_id) {
+                                $query->where('sekolah_id', $user->sekolah_id);
+                            }
+                            
+                            return $query->pluck('nama_kelas', 'id');
+                        })
+                        ->required()
+                        ->searchable()
+                        ->preload()
+                        ->helperText('Wajib memilih kelas untuk penempatan peserta'),
                 ])
-                ->action(function (array $data): StreamedResponse {
+                ->action(function (array $data) {
                     $jumlah = (int) $data['jumlah'];
+                    $kelasId = $data['kelas_id'];
+                    $kelas = \App\Models\Kelas::with('sekolah')->find($kelasId);
+                    
+                    if (!$kelas) {
+                        Notification::make()
+                            ->title('Gagal!')
+                            ->body("Kelas tidak ditemukan.")
+                            ->danger()
+                            ->send();
+                        return;
+                    }
+
                     $prefix = Cache::get('user_username_prefix', 'P' . date('Y') . '00');
                     $startNumber = UserResource::getNextUsernameNumberFromPrefix($prefix);
-
-                    $users = [];
 
                     for ($i = 0; $i < $jumlah; $i++) {
                         $number = $startNumber + $i;
                         $username = $prefix . $number;
                         $password = UserResource::generatePassword();
+                        $gender = rand(0, 1) ? 'L' : 'P';
 
                         User::create([
                             'username' => $username,
                             'name' => $username,
-                            'email' => $username . '@tryout.local',
+                            'nama_lengkap' => $username,
+                            'email' => strtolower($username) . '@peserta.local',
                             'password' => Hash::make($password),
                             'plain_password' => $password,
                             'role' => 'peserta',
+                            'kelas_id' => $kelasId,
+                            'sekolah_id' => $kelas->sekolah_id,
+                            'jenjang' => $kelas->jenjang ?? $kelas->sekolah->jenjang ?? null,
+                            'jenis_kelamin' => $gender,
                             'is_biodata_complete' => false,
                         ]);
-
-                        $users[] = [
-                            'username' => $username,
-                            'password' => $password,
-                        ];
                     }
 
                     Notification::make()
                         ->title('Berhasil!')
-                        ->body("$jumlah user berhasil dibuat dengan awalan $prefix.")
+                        ->body("$jumlah user berhasil dibuat untuk kelas {$kelas->nama_kelas}.")
                         ->success()
                         ->send();
-
-                    // Return CSV download
-                    return response()->streamDownload(function () use ($users) {
-                        $handle = fopen('php://output', 'w');
-                        fputcsv($handle, ['No', 'Username', 'Password']);
-
-                        foreach ($users as $index => $user) {
-                            fputcsv($handle, [
-                                $index + 1,
-                                $user['username'],
-                                $user['password'],
-                            ]);
-                        }
-
-                        fclose($handle);
-                    }, 'users_batch_' . date('Y-m-d_His') . '.csv');
                 }),
 
             Actions\Action::make('download_template')

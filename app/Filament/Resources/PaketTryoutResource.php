@@ -92,8 +92,15 @@ class PaketTryoutResource extends Resource
                                         Forms\Components\Select::make('mapel_id')
                                             ->label('Mata Pelajaran')
                                             ->options(function (callable $get) {
-                                                // Ambil semua mapel
-                                                $allMapel = RefMapel::all()->mapWithKeys(fn($m) => [$m->id => "{$m->nama_mapel} - {$m->jenjang}"]);
+                                                $user = auth()->user();
+                                                $query = RefMapel::query();
+
+                                                if ($user->isAdmin() && $user->jenjang) {
+                                                    $query->where('jenjang', $user->jenjang);
+                                                }
+
+                                                $allMapel = $query->get()->mapWithKeys(fn($m) => [$m->id => "{$m->nama_mapel} - {$m->jenjang}"]);
+
                                                 // Ambil mapel yang sudah dipilih di repeater item LAIN
                                                 $selectedMapelIds = collect($get('../../mapelItems'))
                                                     ->pluck('mapel_id')

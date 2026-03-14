@@ -1,38 +1,30 @@
 # Status Proyek: Tryout TKA Bimbel Excellent
 
-> **Terakhir diperbarui**: 13 Maret 2026
+> **Terakhir diperbarui**: 14 Maret 2026
 
 ## 1. Pekerjaan yang Telah Selesai (Completed)
 
 ### A. Konsultasi & Arsitektur
 *   [x] **Analisis Tech Stack**: Laravel 12 + FilamentPHP v3 + PostgreSQL (Prod) / MySQL (Local Docker).
 *   [x] **Desain Database**: 10+ tabel (master, bank soal, transaksi).
-*   [x] **Dokumentasi**: Folder `documentation/` diperbarui.
+*   [x] **Dokumentasi**: Folder `documentation/` diperbarui (13 file).
 
 ### B. Konfigurasi Sistem & Infrastruktur
-*   [x] **Pindah Database**: Migrasi dari PostgreSQL ke MySQL (Docker) untuk kelancaran pengembangan lokal.
-*   [x] **Instalasi Ekstensi PHP**: Instalasi `php-intl`, `php-gd`, dan `php-pgsql` pada server lokal.
+*   [x] **Pindah Database**: Migrasi dari PostgreSQL ke MySQL (Docker).
+*   [x] **Instalasi Ekstensi PHP**: `php-intl`, `php-gd`, `php-pgsql`.
 *   [x] **Wake-on-LAN**: Script `setup_wol.sh`.
-*   [x] **Storage Link**: `php artisan storage:link` untuk upload gambar/media.
 
 ### C. Admin Panel (FilamentPHP)
-*   [x] **Bank Soal Resource**:
-    *   Form create/edit dengan tipe soal dinamis (PG_TUNGGAL, PG_KOMPLEKS, BENAR_SALAH).
-    *   Repeater jawaban (reorderable, collapsible, cloneable) dengan skor per opsi.
-*   [x] **Bank Stimulus Resource**:
-    *   [x] **Fitur Excel Excel**: Tombol "Download Template" dengan dropdown otomatis untuk Mapel & Paket dari database.
-    *   [x] **Fitur Import Excel**: Memproses file Excel wacana secara otomatis.
-    *   RichEditor konten + file upload media.
-*   [x] **Paket Tryout Resource**:
-    *   Form dengan cascading dropdown.
-    *   Mode soal: ACAK (random) / MANUAL.
-*   [x] **User Management**:
-    *   [x] **Security**: Penentuan role `admin` untuk akses panel Filament.
-    *   [x] **Admin Seeding**: Penambahan user admin default (`admin@admin.com`).
-    *   [x] **Role Overhaul**: Implementasi `super_admin` dan `admin` berbasis jenjang & sekolah.
-    *   [x] **Custom Resources**: `UserSuperAdminResource` & `UserAdminResource`.
-    *   [x] **NPSN Support**: Penambahan kolom NPSN dan kewajiban data sekolah bagi Admin.
-    *   [x] **UX Optimization**: Redirect otomatis ke daftar (tabel) setelah Create/Edit.
+*   [x] **Bank Soal & Stimulus**: Form dinamis, Repeater jawaban, Excel Import/Export wacana.
+*   [x] **Paket Tryout**: Cascading dropdown, mode Acak/Manual.
+*   [x] **User & Role Overhaul**:
+    *   [x] Implementasi `super_admin` & `admin` berbasis Jenjang & Sekolah.
+    *   [x] **Jenjang Consistency**: Locking jenjang Kelas berdasarkan Sekolah.
+    *   [x] **Admin "Follow All Classes"**: Otomasi penugasan kelas bagi admin sekolah.
+    *   [x] **Permission Split**: Pemetaan hak akses (Peserta, Bank Soal, TRYOUT).
+    *   [x] **Jenjang Filtering**: Filter otomatis Mata Pelajaran berdasarkan jenjang admin.
+    *   [x] **UX Optimization**: Redirect to index, Sticky footer, Sticky save buttons.
+    *   [x] **Audit Log**: Integrasi Spatie Activitylog.
 
 ### D. Student Portal (Halaman Ujian)
 ... (tetap)

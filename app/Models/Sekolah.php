@@ -17,6 +17,7 @@ class Sekolah extends Model
     protected $fillable = [
         'nama_sekolah',
         'npsn',
+        'jenjang',
         'alamat',
     ];
 
@@ -37,12 +38,28 @@ class Sekolah extends Model
     }
 
     /**
+     * Relasi ke admin-admin di sekolah ini
+     */
+    public function admins()
+    {
+        return $this->hasMany(User::class)->where('role', 'admin');
+    }
+
+    /**
+     * Relasi ke peserta-peserta di sekolah ini
+     */
+    public function peserta()
+    {
+        return $this->hasMany(User::class)->where('role', 'peserta');
+    }
+
+    /**
      * Activity Log options
      */
     public function getActivitylogOptions(): LogOptions
     {
         return LogOptions::defaults()
-            ->logOnly(['nama_sekolah', 'npsn', 'alamat'])
+            ->logOnly(['nama_sekolah', 'npsn', 'jenjang', 'alamat'])
             ->logOnlyDirty();
     }
 }

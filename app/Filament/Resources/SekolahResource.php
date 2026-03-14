@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\SekolahResource\Pages;
 use App\Models\Sekolah;
+use App\Enums\Jenjang;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -48,6 +49,12 @@ class SekolahResource extends Resource
                             ->length(8)
                             ->placeholder('Contoh: 12345678')
                             ->helperText('8 digit kode NPSN sekolah'),
+                        Forms\Components\Select::make('jenjang')
+                            ->label('Jenjang')
+                            ->options(
+                                collect(Jenjang::cases())->mapWithKeys(fn($j) => [$j->value => $j->label()])
+                            )
+                            ->required(),
                         Forms\Components\Textarea::make('alamat')
                             ->label('Alamat')
                             ->rows(2)
@@ -70,6 +77,14 @@ class SekolahResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->copyable(),
+                Tables\Columns\BadgeColumn::make('jenjang')
+                    ->colors([
+                        'primary' => 'SD',
+                        'success' => 'SMP',
+                        'warning' => 'SMA',
+                        'danger' => 'SMK',
+                        'info' => 'UMUM',
+                    ]),
                 Tables\Columns\TextColumn::make('alamat')
                     ->label('Alamat')
                     ->limit(40)
@@ -78,9 +93,13 @@ class SekolahResource extends Resource
                     ->label('Jml Kelas')
                     ->counts('kelas')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('users_count')
+                Tables\Columns\TextColumn::make('admins_count')
+                    ->label('Total Admin')
+                    ->counts('admins')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('peserta_count')
                     ->label('Jml Peserta')
-                    ->counts('users')
+                    ->counts('peserta')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat')
