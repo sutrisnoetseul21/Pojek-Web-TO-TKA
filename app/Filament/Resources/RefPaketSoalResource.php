@@ -17,6 +17,12 @@ class RefPaketSoalResource extends Resource
 {
     protected static ?string $model = RefPaketSoal::class;
 
+    public static function canViewAny(): bool
+    {
+        $user = auth()->user();
+        return $user->hasRole('super_admin') || $user->hasPermissionTo('manage_soal');
+    }
+
     public static function getEloquentQuery(): Builder
     {
         $query = parent::getEloquentQuery();

@@ -4,15 +4,20 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Filament\Models\Contracts\FilamentUser;
 use Filament\Panel;
+use Spatie\Permission\Traits\HasRoles;
+use Spatie\Activitylog\Traits\LogsActivity;
+use Spatie\Activitylog\LogOptions;
+use App\Enums\UserRole;
 
 class User extends Authenticatable implements FilamentUser
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, HasRoles, LogsActivity, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -34,6 +39,9 @@ class User extends Authenticatable implements FilamentUser
         'plain_password',
         'jenjang',
         'npsn',
+        'sekolah_id',
+        'kelas_id',
+        'nomor_peserta',
     ];
 
     /**
@@ -92,6 +100,34 @@ class User extends Authenticatable implements FilamentUser
         return $this->role === 'peserta';
     }
 
+    // ─── Relasi Baru ──────────────────────────────────────────
+
+    /**
+     * Relasi ke Sekolah
+     */
+    public function sekolahRelation()
+    {
+        return $this->belongsTo(Sekolah::class, 'sekolah_id');
+    }
+
+    /**
+     * Relasi ke Kelas (untuk peserta)
+     */
+    public function kelas()
+    {
+        return $this->belongsTo(Kelas::class);
+    }
+
+    /**
+     * Relasi ke Kelas yang dikelola (untuk admin, many-to-many)
+     */
+    public function kelases()
+    {
+        return $this->belongsToMany(Kelas::class, 'admin_kelas');
+    }
+
+    // ─── Relasi yang Sudah Ada ────────────────────────────────
+
     /**
      * Relasi ke jadwal tryout yang diikuti
      */
@@ -101,6 +137,8 @@ class User extends Authenticatable implements FilamentUser
             ->withPivot(['token_used', 'status', 'waktu_mulai', 'waktu_selesai', 'sisa_waktu', 'total_nilai'])
             ->withTimestamps();
     }
+
+    // ─── Scopes ────────────────────────────────────────────────
 
     /**
      * Scope untuk peserta saja
@@ -124,5 +162,45 @@ class User extends Authenticatable implements FilamentUser
     public function scopeAdmin($query)
     {
         return $query->where('role', 'admin');
+    }
+
+    // ─── Nomor Peserta Generator ──────────────────────────────
+
+    /**
+     * Generate nomor peserta: SEKOLAH-KELAS-URUT
+     */
+    public static function generateNomorPeserta(User $user): ?string
+    {
+        if (!$user->sekolah_id || !$user->kelas_id) {
+            return null;
+        }
+
+        $sekolah = $user->sekolahRelation;
+        $kelas = $user->kelas;
+
+        if (!$sekolah || !$kelas) {
+            return null;
+        }
+
+        $prefix = strtoupper(substr(preg_replace('/[^A-Za-z0-9]/', '', $sekolah->nama_sekolah), 0, 5));
+        $kelasCode = str_replace([' ', '-'], '', $kelas->nama_kelas);
+
+        $lastNumber = User::where('kelas_id', $kelas->id)
+            ->whereNotNull('nomor_peserta')
+            ->count();
+
+        return sprintf('%s-%s-%03d', $prefix, $kelasCode, $lastNumber + 1);
+    }
+
+    // ─── Activity Log ─────────────────────────────────────────
+
+    /**
+     * Activity Log options
+     */
+    public function getActivitylogOptions(): LogOptions
+    {
+        return LogOptions::defaults()
+            ->logOnly(['username', 'email', 'role', 'nama_lengkap', 'sekolah_id', 'kelas_id', 'nomor_peserta'])
+            ->logOnlyDirty();
     }
 }

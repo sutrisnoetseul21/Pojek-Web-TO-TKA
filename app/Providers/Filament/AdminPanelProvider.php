@@ -27,9 +27,29 @@ class AdminPanelProvider extends PanelProvider
             ->id('admin')
             ->path('admin')
             ->login()
+            ->sidebarCollapsibleOnDesktop()
             ->colors([
                 'primary' => Color::Amber,
             ])
+            ->renderHook(
+                'panels::head.end',
+                fn () => '<style>
+                    .fi-form-actions {
+                        position: sticky !important;
+                        bottom: 0 !important;
+                        z-index: 10 !important;
+                        background-color: white !important;
+                        padding: 1rem !important;
+                        border-top: 1px solid #e5e7eb !important;
+                        margin-top: 0.5rem !important;
+                        box-shadow: 0 -2px 6px rgba(0,0,0,0.05) !important;
+                    }
+                    .dark .fi-form-actions {
+                        background-color: #1f2937 !important;
+                        border-top-color: #374151 !important;
+                    }
+                </style>',
+            )
             ->discoverResources(in: app_path('Filament/Resources'), for: 'App\\Filament\\Resources')
             ->discoverPages(in: app_path('Filament/Pages'), for: 'App\\Filament\\Pages')
             ->pages([

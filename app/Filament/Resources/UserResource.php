@@ -23,23 +23,27 @@ class UserResource extends Resource
     protected static ?string $navigationLabel = 'User Peserta';
     protected static ?string $modelLabel = 'User';
     protected static ?string $pluralModelLabel = 'Users';
-    protected static ?string $navigationGroup = 'Manajemen User';
-    protected static ?int $navigationSort = 1;
+    protected static ?string $navigationGroup = 'Manajemen Peserta';
+    protected static ?int $navigationSort = 3;
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
 
+    public static function canViewAny(): bool
+    {
+        $user = auth()->user();
+        return $user->hasRole('super_admin') || $user->hasPermissionTo('manage_peserta');
+    }
+
     public static function getEloquentQuery(): Builder
     {
-        $query = parent::getEloquentQuery()->where(fn (Builder $query) => $query->where('role', '=', 'peserta'));
+        $query = parent::getEloquentQuery()
+            ->withoutGlobalScopes([SoftDeletingScope::class])
+            ->where('role', '=', 'peserta');
+
         $user = auth()->user();
 
-        if ($user->isAdmin()) {
-            if ($user->jenjang) {
-                $query->where(fn (Builder $query) => $query->where('jenjang', '=', $user->jenjang));
-            }
-            if ($user->sekolah) {
-                $query->where(fn (Builder $query) => $query->where('sekolah', '=', $user->sekolah));
-            }
+        if ($user->hasRole('admin') && $user->sekolah_id) {
+            $query->where('sekolah_id', $user->sekolah_id);
         }
 
         return $query;
@@ -65,11 +69,12 @@ class UserResource extends Resource
                             ->default('peserta'),
                     ])->columns(['default' => 3]),
 
-                Forms\Components\Section::make('Biodata')
-                    ->description('Biodata peserta (diisi saat pertama login)')
+                Forms\Components\Section::make('Biodata & Penempatan')
+                    ->description('Biodata peserta dan penempatan kelas')
                     ->schema([
                         Forms\Components\TextInput::make('nama_lengkap')
-                            ->label('Nama Lengkap'),
+                            ->label('Nama Lengkap')
+                            ->required(),
                         Forms\Components\Select::make('jenjang')
                             ->options([
                                 'SD' => 'SD',
@@ -80,20 +85,28 @@ class UserResource extends Resource
                             ])
                             ->required()
                             ->default(fn () => auth()->user()->jenjang)
-                            ->disabled(fn () => auth()->user()->isAdmin() && auth()->user()->jenjang !== null)
+                            ->disabled(fn () => auth()->user()->hasRole('admin') && auth()->user()->jenjang !== null)
                             ->dehydrated(),
-                        Forms\Components\TextInput::make('sekolah')
+                        Forms\Components\Select::make('sekolah_id')
                             ->label('Sekolah')
-                            ->default(fn () => auth()->user()->sekolah)
-                            ->disabled(fn () => auth()->user()->isAdmin() && auth()->user()->sekolah !== null)
+                            ->relationship('sekolahRelation', 'nama_sekolah')
                             ->required()
-                            ->dehydrated(),
-                        Forms\Components\TextInput::make('npsn')
-                            ->label('NPSN')
-                            ->default(fn () => auth()->user()->npsn)
-                            ->disabled(fn () => auth()->user()->isAdmin() && auth()->user()->npsn !== null)
+                            ->default(fn () => auth()->user()->sekolah_id)
+                            ->disabled(fn () => auth()->user()->hasRole('admin'))
+                            ->dehydrated()
+                            ->live(),
+                        Forms\Components\Select::make('kelas_id')
+                            ->label('Kelas')
+                            ->options(function (Forms\Get $get) {
+                                $sekolahId = $get('sekolah_id');
+                                if (!$sekolahId) return [];
+                                return \App\Models\Kelas::where('sekolah_id', $sekolahId)
+                                    ->pluck('nama_kelas', 'id');
+                            })
                             ->required()
-                            ->dehydrated(),
+                            ->searchable()
+                            ->preload()
+                            ->helperText('Hanya menampilkan kelas dari sekolah terpilih'),
                         Forms\Components\TextInput::make('tempat_lahir')
                             ->label('Tempat Lahir'),
                         Forms\Components\DatePicker::make('tanggal_lahir')
@@ -142,15 +155,19 @@ class UserResource extends Resource
                         'danger' => 'SMK',
                         'info' => 'UMUM',
                     ]),
-                Tables\Columns\TextColumn::make('sekolah')
+                Tables\Columns\TextColumn::make('sekolahRelation.nama_sekolah')
                     ->label('Sekolah')
                     ->searchable()
                     ->placeholder('Belum diisi')
                     ->toggleable(),
-                Tables\Columns\TextColumn::make('npsn')
-                    ->label('NPSN')
+                Tables\Columns\TextColumn::make('kelas.nama_kelas')
+                    ->label('Kelas')
                     ->searchable()
                     ->placeholder('Belum diisi')
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('sekolahRelation.npsn')
+                    ->label('NPSN')
+                    ->searchable()
                     ->toggleable(),
                 Tables\Columns\IconColumn::make('is_biodata_complete')
                     ->label('Biodata')
@@ -166,18 +183,17 @@ class UserResource extends Resource
             ])
             ->defaultSort('username', 'asc')
             ->filters([
-                Tables\Filters\SelectFilter::make('sekolah')
+                Tables\Filters\SelectFilter::make('sekolah_id')
                     ->label('Sekolah')
-                    ->options(fn () => User::where('role', 'peserta')
-                        ->whereNotNull('sekolah')
-                        ->where('sekolah', '!=', '')
-                        ->distinct()
-                        ->orderBy('sekolah')
-                        ->pluck('sekolah', 'sekolah')
-                        ->toArray()
-                    )
+                    ->relationship('sekolahRelation', 'nama_sekolah')
                     ->searchable()
+                    ->preload()
                     ->placeholder('Semua Sekolah'),
+                Tables\Filters\SelectFilter::make('kelas_id')
+                    ->label('Kelas')
+                    ->relationship('kelas', 'nama_kelas')
+                    ->searchable()
+                    ->preload(),
                 Tables\Filters\TernaryFilter::make('is_biodata_complete')
                     ->label('Biodata Lengkap'),
             ])

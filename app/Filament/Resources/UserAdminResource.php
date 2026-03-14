@@ -5,6 +5,7 @@ namespace App\Filament\Resources;
 use App\Filament\Resources\UserAdminResource\Pages;
 use App\Filament\Resources\UserAdminResource\RelationManagers;
 use App\Models\User;
+use App\Enums\Jenjang;
 use Filament\Forms;
 use Filament\Forms\Form;
 use Filament\Resources\Resource;
@@ -56,28 +57,64 @@ class UserAdminResource extends Resource
                         Forms\Components\Hidden::make('role')
                             ->default('admin'),
                     ])->columns(2),
-                
-                Forms\Components\Section::make('Otoritas')
-                    ->description('Tentukan jenjang dan sekolah yang dikelola oleh admin ini')
+
+                Forms\Components\Section::make('Hak Akses')
+                    ->description('Tentukan permission yang dimiliki admin ini')
+                    ->schema([
+                        Forms\Components\CheckboxList::make('permissions')
+                            ->label('Hak Akses Admin')
+                            ->options([
+                                'manage_soal'    => '📝 Kelola Soal (Mapel, Paket, Bank Soal, Stimulus, Tryout, Jadwal)',
+                                'manage_peserta' => '👥 Kelola Peserta (User Peserta, Sekolah, Kelas, Cetak Kartu)',
+                            ])
+                            ->required()
+                            ->columns(1)
+                            ->helperText('Centang satu atau lebih hak akses untuk admin ini'),
+                    ]),
+
+                Forms\Components\Section::make('Otoritas Wilayah')
+                    ->description('Tentukan jenjang dan sekolah yang dikelola')
                     ->schema([
                         Forms\Components\Select::make('jenjang')
-                            ->options([
-                                'SD' => 'SD',
-                                'SMP' => 'SMP',
-                                'SMA' => 'SMA',
-                                'SMK' => 'SMK',
-                                'UMUM' => 'Umum',
+                            ->options(
+                                collect(Jenjang::cases())->mapWithKeys(fn($j) => [$j->value => $j->label()])
+                            )
+                            ->required(),
+                        Forms\Components\Select::make('sekolah_id')
+                            ->label('Sekolah')
+                            ->relationship('sekolahRelation', 'nama_sekolah')
+                            ->searchable()
+                            ->preload()
+                            ->required()
+                            ->createOptionForm([
+                                Forms\Components\TextInput::make('nama_sekolah')
+                                    ->required()
+                                    ->maxLength(255),
+                                Forms\Components\TextInput::make('npsn')
+                                    ->required()
+                                    ->unique('sekolah', 'npsn')
+                                    ->maxLength(255),
+                                Forms\Components\Textarea::make('alamat')
+                                    ->maxLength(255),
                             ])
-                            ->required(),
-                        Forms\Components\TextInput::make('sekolah')
-                            ->label('Nama Sekolah')
-                            ->placeholder('Contoh: SDN 1 Gandaria')
-                            ->required(),
-                        Forms\Components\TextInput::make('npsn')
-                            ->label('NPSN')
-                            ->placeholder('Contoh: 12345678')
-                            ->required(),
+                            ->helperText('Pilih sekolah atau buat baru jika belum ada'),
                     ])->columns(2),
+
+                Forms\Components\Section::make('Penugasan Kelas')
+                    ->description('Pilih kelas yang bisa dikelola oleh admin ini')
+                    ->schema([
+                        Forms\Components\CheckboxList::make('kelases')
+                            ->label('Kelas yang Dikelola')
+                            ->relationship('kelases', 'nama_kelas', modifyQueryUsing: function (Builder $query, Forms\Get $get) {
+                                if ($sekolahId = $get('sekolah_id')) {
+                                    return $query->where('sekolah_id', $sekolahId);
+                                }
+                                return $query;
+                            })
+                            ->searchable()
+                            ->columns(3)
+                            ->helperText('Hanya menampilkan kelas dari sekolah yang dipilih di atas'),
+                    ]),
             ]);
     }
 
@@ -88,6 +125,9 @@ class UserAdminResource extends Resource
                 Tables\Columns\TextColumn::make('username')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('email')
+                    ->searchable()
+                    ->toggleable(),
                 Tables\Columns\BadgeColumn::make('jenjang')
                     ->colors([
                         'primary' => 'SD',
@@ -96,12 +136,21 @@ class UserAdminResource extends Resource
                         'danger' => 'SMK',
                         'info' => 'UMUM',
                     ]),
-                Tables\Columns\TextColumn::make('sekolah')
+                Tables\Columns\TextColumn::make('sekolahRelation.nama_sekolah')
+                    ->label('Sekolah')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('npsn')
+                Tables\Columns\TextColumn::make('sekolahRelation.npsn')
                     ->label('NPSN')
                     ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('permissions.name')
+                    ->label('Hak Akses')
+                    ->badge()
+                    ->separator(','),
+                Tables\Columns\TextColumn::make('kelases_count')
+                    ->label('Jml Kelas')
+                    ->counts('kelases')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
@@ -110,13 +159,9 @@ class UserAdminResource extends Resource
             ])
             ->filters([
                 Tables\Filters\SelectFilter::make('jenjang')
-                    ->options([
-                        'SD' => 'SD',
-                        'SMP' => 'SMP',
-                        'SMA' => 'SMA',
-                        'SMK' => 'SMK',
-                        'UMUM' => 'Umum',
-                    ]),
+                    ->options(
+                        collect(Jenjang::cases())->mapWithKeys(fn($j) => [$j->value => $j->label()])
+                    ),
             ])
             ->actions([
                 Tables\Actions\EditAction::make(),
