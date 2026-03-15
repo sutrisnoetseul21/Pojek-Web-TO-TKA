@@ -822,6 +822,7 @@
         </button>
 
         <a class="nav-btn nav-btn-selesai" id="btnSelesai" href="{{ route('tryout.selesai', $pesertaJadwal) }}"
+            onclick="localStorage.removeItem('currentMapelIndex_' + pesertaJadwalId); localStorage.removeItem('mapelTimers_' + pesertaJadwalId);"
             style="display:none; text-decoration:none;">
             ✅ Selesai
         </a>
@@ -848,6 +849,7 @@
             </div>
             <div style="margin-top:1rem;text-align:center;">
                 <a href="{{ route('tryout.selesai', $pesertaJadwal) }}" class="nav-btn nav-btn-selesai"
+                    onclick="localStorage.removeItem('currentMapelIndex_' + pesertaJadwalId); localStorage.removeItem('mapelTimers_' + pesertaJadwalId);"
                     style="display:inline-flex;">
                     ✅ Selesai & Kumpulkan
                 </a>
@@ -919,10 +921,22 @@
             for (const [k, v] of Object.entries(jawabanMap)) answers[k] = v;
             for (const [k, v] of Object.entries(raguMap)) raguStatus[k] = v;
 
-            // Setup per-mapel timers
-            mapelSections.forEach((section, i) => {
-                mapelTimers[i] = section.waktu_menit * 60;
-            });
+            // Load state from localStorage
+            const storedIndex = localStorage.getItem('currentMapelIndex_' + pesertaJadwalId);
+            if (storedIndex !== null) {
+                currentMapelIndex = parseInt(storedIndex);
+            }
+
+            const storedTimers = localStorage.getItem('mapelTimers_' + pesertaJadwalId);
+            if (storedTimers !== null) {
+                mapelTimers = JSON.parse(storedTimers);
+            } else {
+                // Setup per-mapel timers
+                mapelSections.forEach((section, i) => {
+                    mapelTimers[i] = section.waktu_menit * 60;
+                });
+                localStorage.setItem('mapelTimers_' + pesertaJadwalId, JSON.stringify(mapelTimers));
+            }
 
             // Start first mapel
             startMapelTimer();
@@ -935,6 +949,9 @@
             timerInterval = setInterval(() => {
                 mapelTimers[currentMapelIndex]--;
 
+                // Save timer to localStorage every tick
+                localStorage.setItem('mapelTimers_' + pesertaJadwalId, JSON.stringify(mapelTimers));
+
                 if (mapelTimers[currentMapelIndex] <= 0) {
                     mapelTimers[currentMapelIndex] = 0;
                     clearInterval(timerInterval);
@@ -943,6 +960,8 @@
                         showTransition(currentMapelIndex + 1);
                     } else {
                         // Last mapel done → go to selesai
+                        localStorage.removeItem('currentMapelIndex_' + pesertaJadwalId);
+                        localStorage.removeItem('mapelTimers_' + pesertaJadwalId);
                         window.location.href = "{{ route('tryout.selesai', $pesertaJadwal) }}";
                     }
                 }
@@ -1240,6 +1259,10 @@
             document.getElementById('transitionScreen').classList.remove('show');
             currentMapelIndex = nextIndex;
             currentSoalIndex = 0;
+
+            // Save active mapel to localStorage
+            localStorage.setItem('currentMapelIndex_' + pesertaJadwalId, currentMapelIndex);
+
             startMapelTimer();
             renderSoal();
         }

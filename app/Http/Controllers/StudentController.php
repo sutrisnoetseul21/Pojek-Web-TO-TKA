@@ -381,9 +381,19 @@ class StudentController extends Controller
                     $totalNilai += $opsi->skor ?? 0;
                 }
             } elseif ($soal->tipe_soal === 'PG_KOMPLEKS') {
-                // Multiple Answer: Sum skor dari opsi yang dipilih
                 if (is_array($userJawaban)) {
-                    $skorDidapat = $soal->jawaban->whereIn('id', $userJawaban)->sum('skor');
+                    $correctChoices = $soal->jawaban->whereIn('id', $userJawaban)->where('skor', '>', 0);
+                    $wrongChoices = $soal->jawaban->whereIn('id', $userJawaban)->where('skor', '<=', 0);
+
+                    $skorDidapat = $correctChoices->sum('skor');
+
+                    // Penalti: Setiap pilihan salah mengurangi skor sebesar bobot skor benar pertama (Fallback: 1)
+                    $penaltyAmount = $soal->jawaban->where('skor', '>', 0)->first()->skor ?? 1;
+                    $skorDidapat -= $wrongChoices->count() * $penaltyAmount;
+
+                    // Batas minimum skor per nomor adalah 0
+                    $skorDidapat = max(0, $skorDidapat);
+
                     $totalNilai += $skorDidapat;
                 }
             } elseif ($soal->tipe_soal === 'BENAR_SALAH') {
