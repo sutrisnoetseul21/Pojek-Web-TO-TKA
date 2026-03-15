@@ -15,11 +15,18 @@ use PhpOffice\PhpSpreadsheet\Cell\DataValidation;
 
 class BankSoalTemplateExport implements WithMultipleSheets
 {
+    protected $jenjang;
+
+    public function __construct($jenjang = null)
+    {
+        $this->jenjang = $jenjang;
+    }
+
     public function sheets(): array
     {
         return [
             'Form Soal' => new SoalFormSheet(),
-            'Referensi_Data' => new RelasiDataSheet(),
+            'Referensi_Data' => new RelasiDataSheet($this->jenjang),
         ];
     }
 }
@@ -208,6 +215,13 @@ class SoalFormSheet implements WithTitle, WithHeadings, WithEvents, \Maatwebsite
 
 class RelasiDataSheet implements WithTitle, WithHeadings, FromCollection
 {
+    protected $jenjang;
+
+    public function __construct($jenjang = null)
+    {
+        $this->jenjang = $jenjang;
+    }
+
     public function title(): string
     {
         return 'Referensi_Data';
@@ -220,9 +234,21 @@ class RelasiDataSheet implements WithTitle, WithHeadings, FromCollection
 
     public function collection()
     {
-        $mapels = RefMapel::all()->map(fn($m) => "{$m->id} - {$m->nama_mapel} - {$m->jenjang}")->toArray();
-        $pakets = RefPaketSoal::all()->map(fn($p) => "{$p->id} - {$p->nama_paket}")->toArray();
-        $stimulus = BankStimulus::all()->map(fn($s) => "{$s->id} - {$s->judul}")->toArray();
+        $queryMapel = RefMapel::query();
+        $queryPaket = RefPaketSoal::query();
+        $queryStimulus = BankStimulus::query();
+
+        if ($this->jenjang) {
+            $queryMapel->where('jenjang', $this->jenjang);
+            $queryPaket->where('jenjang', $this->jenjang);
+            $queryStimulus->whereHas('mapel', function ($q) {
+                $q->where('jenjang', $this->jenjang);
+            });
+        }
+
+        $mapels = $queryMapel->get()->map(fn($m) => "{$m->id} - {$m->nama_mapel} - {$m->jenjang}")->toArray();
+        $pakets = $queryPaket->get()->map(fn($p) => "{$p->id} - {$p->nama_paket}")->toArray();
+        $stimulus = $queryStimulus->get()->map(fn($s) => "{$s->id} - {$s->judul}")->toArray();
         $tipeSoal = ['PG_TUNGGAL', 'PG_KOMPLEKS', 'BENAR_SALAH'];
 
         $maxCount = max(count($mapels), count($pakets), count($stimulus), count($tipeSoal));

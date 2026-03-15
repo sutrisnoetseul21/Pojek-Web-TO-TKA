@@ -15,17 +15,31 @@ use Illuminate\Support\Collection;
 
 class StimulusTemplateExport implements WithMultipleSheets
 {
+    protected $jenjang;
+
+    public function __construct($jenjang = null)
+    {
+        $this->jenjang = $jenjang;
+    }
+
     public function sheets(): array
     {
         return [
-            'Form Stimulus' => new StimulusFormSheet(),
-            'Referensi Data' => new ReferenceDataSheet(),
+            'Form Stimulus' => new StimulusFormSheet($this->jenjang),
+            'Referensi Data' => new ReferenceDataSheet($this->jenjang),
         ];
     }
 }
 
-class StimulusFormSheet implements WithTitle, WithHeadings, WithEvents
+class StimulusFormSheet implements WithTitle, WithHeadings, WithEvents, \Maatwebsite\Excel\Concerns\FromArray
 {
+    protected $jenjang;
+
+    public function __construct($jenjang = null)
+    {
+        $this->jenjang = $jenjang;
+    }
+
     public function title(): string
     {
         return 'Form Stimulus';
@@ -39,6 +53,40 @@ class StimulusFormSheet implements WithTitle, WithHeadings, WithEvents
             'JUDUL STIMULUS',
             'TIPE (TEKS/GAMBAR)',
             'KONTEN WACANA (HTML)',
+        ];
+    }
+
+    public function array(): array
+    {
+        $queryMapel = \App\Models\RefMapel::query();
+        $queryPaket = \App\Models\RefPaketSoal::query();
+
+        if ($this->jenjang) {
+            $queryMapel->where('jenjang', $this->jenjang);
+            $queryPaket->where('jenjang', $this->jenjang);
+        }
+
+        $mapel = $queryMapel->first();
+        $paket = $queryPaket->where('mapel_id', $mapel ? $mapel->id : 0)->first();
+
+        $mapelStr = $mapel ? "{$mapel->id} - {$mapel->nama_mapel} - {$mapel->jenjang}" : '';
+        $paketStr = $paket ? "{$paket->id} - {$paket->nama_paket}" : '';
+
+        return [
+            [
+                $mapelStr, 
+                $paketStr, 
+                'Wacana Teks Deskripsi Sejarah', 
+                'TEKS', 
+                '<p>Gajah Mada adalah seorang Patih Amangkubhumi...</p>'
+            ],
+            [
+                $mapelStr, 
+                '', 
+                'Wacana Tanpa Paket', 
+                'TEKS', 
+                '<p>Wacana ini tidak dimasukkan ke dalam paket tertentu.</p>'
+            ]
         ];
     }
 
@@ -66,6 +114,7 @@ class StimulusFormSheet implements WithTitle, WithHeadings, WithEvents
                 $validationB = $sheet->getCell('B2')->getDataValidation();
                 $validationB->setType(DataValidation::TYPE_LIST);
                 $validationB->setAllowBlank(true);
+                $validationB->setShowDropDown(true); // <-- Added here
                 $validationB->setFormula1("'Referensi Data'!\$B\$2:\$B\$100");
                 for ($i = 2; $i <= 100; $i++) {
                     $sheet->getCell('B'.$i)->setDataValidation(clone $validationB);
@@ -74,6 +123,7 @@ class StimulusFormSheet implements WithTitle, WithHeadings, WithEvents
                 // Dropdown untuk Tipe (Kolom D) - Statis
                 $validationD = $sheet->getCell('D2')->getDataValidation();
                 $validationD->setType(DataValidation::TYPE_LIST);
+                $validationD->setShowDropDown(true); // <-- Added here
                 $validationD->setFormula1('"TEKS,AUDIO,VIDEO,GAMBAR"');
                 for ($i = 2; $i <= 100; $i++) {
                     $sheet->getCell('D'.$i)->setDataValidation(clone $validationD);
@@ -92,6 +142,13 @@ class StimulusFormSheet implements WithTitle, WithHeadings, WithEvents
 
 class ReferenceDataSheet implements WithTitle, WithHeadings, FromCollection
 {
+    protected $jenjang;
+
+    public function __construct($jenjang = null)
+    {
+        $this->jenjang = $jenjang;
+    }
+
     public function title(): string
     {
         return 'Referensi Data';
@@ -104,8 +161,16 @@ class ReferenceDataSheet implements WithTitle, WithHeadings, FromCollection
 
     public function collection()
     {
-        $mapels = RefMapel::all()->map(fn($m) => "{$m->id} - {$m->nama_mapel} - {$m->jenjang}")->toArray();
-        $pakets = RefPaketSoal::all()->map(fn($p) => "{$p->id} - {$p->nama_paket}")->toArray();
+        $queryMapel = RefMapel::query();
+        $queryPaket = RefPaketSoal::query();
+
+        if ($this->jenjang) {
+            $queryMapel->where('jenjang', $this->jenjang);
+            $queryPaket->where('jenjang', $this->jenjang);
+        }
+
+        $mapels = $queryMapel->get()->map(fn($m) => "{$m->id} - {$m->nama_mapel} - {$m->jenjang}")->toArray();
+        $pakets = $queryPaket->get()->map(fn($p) => "{$p->id} - {$p->nama_paket}")->toArray();
 
         $maxCount = max(count($mapels), count($pakets));
         $data = [];

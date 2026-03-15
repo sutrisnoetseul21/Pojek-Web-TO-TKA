@@ -161,7 +161,12 @@ class BankStimulusResource extends Resource
                     ->label('Download Template')
                     ->icon('heroicon-o-arrow-down-tray')
                     ->color('info')
-                    ->action(fn () => Excel::download(new StimulusTemplateExport, 'template-stimulus.xlsx')),
+                    ->action(function () {
+                        $user = auth()->user();
+                        $sekolahNama = $user->sekolahRelation ? $user->sekolahRelation->nama_sekolah : 'Template';
+                        $filename = "{$sekolahNama} - Template Stimulus.xlsx";
+                        return Excel::download(new StimulusTemplateExport($user->jenjang), $filename);
+                    }),
                 
                 Tables\Actions\Action::make('import_excel')
                     ->label('Import Excel')
@@ -176,7 +181,8 @@ class BankStimulusResource extends Resource
                     ])
                     ->action(function (array $data) {
                         try {
-                            Excel::import(new StimulusImport, storage_path('app/public/' . $data['file']));
+                            $userJenjang = auth()->user()->jenjang;
+                            Excel::import(new StimulusImport($userJenjang), storage_path('app/public/' . $data['file']));
                             
                             Notification::make()
                                 ->title('Berhasil mengimpor data stimulus')
@@ -190,6 +196,7 @@ class BankStimulusResource extends Resource
                         }
                     }),
             ])
+                        
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([
                     Tables\Actions\DeleteBulkAction::make(),

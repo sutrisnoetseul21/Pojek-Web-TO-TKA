@@ -10,6 +10,13 @@ use Illuminate\Support\Str;
 
 class BankSoalImport implements ToModel, WithHeadingRow
 {
+    protected $jenjang;
+
+    public function __construct($jenjang = null)
+    {
+        $this->jenjang = $jenjang;
+    }
+
     public function model(array $row)
     {
         // Skip if required fields are missing
@@ -20,7 +27,22 @@ class BankSoalImport implements ToModel, WithHeadingRow
         // Ekstrak ID (Format "ID - Nama")
         $mapelId = (int) Str::before($row['mapel_pilih'], ' -');
         
+        if ($this->jenjang) {
+            $mapel = \App\Models\RefMapel::find($mapelId);
+            if ($mapel && $mapel->jenjang !== $this->jenjang) {
+                throw new \Exception("Mata Pelajaran \"{$mapel->nama_mapel}\" ({$mapel->jenjang}) tidak sesuai dengan jenjang Anda ({$this->jenjang}).");
+            }
+        }
+
         $paketId = (int) Str::before($row['kategori_paket_pilih_opsional'], ' -');
+        
+        // Validasi Paket milik Mapel
+        if ($paketId) {
+            $paket = \App\Models\RefPaketSoal::find($paketId);
+            if ($paket && $paket->mapel_id != $mapelId) {
+                throw new \Exception("Kategori / Paket \"{$paket->nama_paket}\" tidak termasuk dalam Mata Pelajaran ini.");
+            }
+        }
 
         $stimulusId = null;
         if (!empty($row['stimulus_pilih_opsional'])) {

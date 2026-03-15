@@ -74,6 +74,17 @@ class BankSoalResource extends Resource
                                         $set('paket_id', null);
                                         $set('stimulus_id', null);
                                     })
+                                    ->rules([
+                                        fn() => function (string $attribute, $value, $fail) {
+                                            $user = auth()->user();
+                                            if ($user->isAdmin() && $user->jenjang) {
+                                                $mapel = \App\Models\RefMapel::find($value);
+                                                if ($mapel && $mapel->jenjang !== $user->jenjang) {
+                                                    $fail("Mata Pelajaran ini dari Jenjang {$mapel->jenjang}, sedangkan akun Anda dialokasikan untuk Jenjang {$user->jenjang}. Tidak boleh menyimpan.");
+                                                }
+                                            }
+                                        }
+                                    ])
                                     ->label('Mata Pelajaran'),
                                 Forms\Components\Select::make('paket_id')
                                     ->relationship('paket', 'nama_paket', modifyQueryUsing: fn(Builder $query, Forms\Get $get) => $query->where('mapel_id', $get('mapel_id')))

@@ -17,6 +17,8 @@ class ListBankSoals extends ListRecords
 
     protected function getHeaderActions(): array
     {
+        $user = auth()->user();
+
         return [
             Actions\CreateAction::make(),
             
@@ -24,8 +26,10 @@ class ListBankSoals extends ListRecords
                 ->label('Download Template')
                 ->icon('heroicon-o-document-arrow-down')
                 ->color('success')
-                ->action(function () {
-                    return Excel::download(new BankSoalTemplateExport, 'Template Bank Soal.xlsx');
+                ->action(function () use ($user) {
+                    $sekolahNama = $user->sekolahRelation ? $user->sekolahRelation->nama_sekolah : 'Template';
+                    $filename = "{$sekolahNama} - Template Bank Soal.xlsx";
+                    return Excel::download(new BankSoalTemplateExport($user->jenjang ?? null), $filename);
                 }),
                 
             Actions\Action::make('import_soal')
@@ -38,11 +42,11 @@ class ListBankSoals extends ListRecords
                         ->required()
                         ->acceptedFileTypes(['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 'application/vnd.ms-excel']),
                 ])
-                ->action(function (array $data) {
+                ->action(function (array $data) use ($user) {
                     $file = storage_path('app/public/' . $data['attachment']);
                     
                     try {
-                        Excel::import(new BankSoalImport, $file);
+                        Excel::import(new BankSoalImport($user->jenjang ?? null), $file);
                         Notification::make()
                             ->title('Berhasil import Soal')
                             ->success()
