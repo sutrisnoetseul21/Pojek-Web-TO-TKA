@@ -53,8 +53,13 @@ class PesertaJadwalResource extends Resource
             ->schema([
                 Forms\Components\Section::make('Informasi Peserta')
                     ->schema([
-                        Forms\Components\TextInput::make('user.nama_lengkap')
-                            ->label('Nama Peserta'),
+                        Forms\Components\TextInput::make('nama_lengkap')
+                            ->label('Nama Peserta')
+                            ->afterStateHydrated(function ($component, $record) {
+                                if (!$record) return;
+                                $component->state($record->user?->nama_lengkap ?? '-');
+                            })
+                            ->disabled(),
                         Forms\Components\TextInput::make('status')
                             ->label('Status'),
                         Forms\Components\DateTimePicker::make('waktu_mulai')
@@ -154,7 +159,7 @@ class PesertaJadwalResource extends Resource
                     ->icon('heroicon-o-arrow-right-circle')
                     ->color('warning')
                     ->requiresConfirmation()
-                    ->modalHeading('Paksa Lanjut Mapel')
+                    ->modalHeading(fn ($record) => "Paksa Lanjut Mapel (" . ($record->user?->nama_lengkap ?? 'Peserta') . ")")
                     ->modalDescription('Apakah Anda yakin ingin memaksa peserta ini melompati mapel dan beralih ke materi selanjutnya?')
                     ->visible(fn ($record) => $record->status === 'started')
                     ->action(fn ($record) => $record->calculateAndSubmit(false)),
@@ -164,7 +169,7 @@ class PesertaJadwalResource extends Resource
                     ->icon('heroicon-o-stop')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->modalHeading('Paksa Selesai Ujian')
+                    ->modalHeading(fn ($record) => "Paksa Selesai Ujian (" . ($record->user?->nama_lengkap ?? 'Peserta') . ")")
                     ->modalDescription('Aksi ini akan menghentikan seluruh rangkaian ujian siswa seketika dan mengunci akun. Lanjutkan?')
                     ->visible(fn ($record) => $record->status === 'started')
                     ->action(function ($record) {
