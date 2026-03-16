@@ -218,11 +218,14 @@ class StudentController extends Controller
         // Hitung total waktu
         $totalWaktu = $jadwal->paketTryout->mapelItems->sum('waktu_mapel');
 
+        $firstMapel = $jadwal->paketTryout->mapelItems()->orderBy('urutan')->first();
+
         // Update status dan waktu mulai
         $pesertaJadwal->update([
             'status' => 'started',
             'waktu_mulai' => now(),
             'sisa_waktu' => $totalWaktu, // dalam menit
+            'current_mapel_id' => $firstMapel?->mapel_id,
         ]);
 
         return redirect()->route('tryout.soal', $pesertaJadwal);
@@ -250,6 +253,7 @@ class StudentController extends Controller
         foreach ($paket->mapelItems()->with('mapel')->orderBy('urutan')->get() as $mapelItem) {
             $soal = $mapelItem->getSoal();
             $mapelSections[] = [
+                'mapel_id' => $mapelItem->mapel_id,
                 'nama_mapel' => $mapelItem->mapel->nama_mapel ?? 'Mapel',
                 'waktu_menit' => $mapelItem->waktu_mapel,
                 'soal' => $soal->values()->toArray(),
@@ -287,6 +291,22 @@ class StudentController extends Controller
         ]);
 
         $pesertaJadwal = PesertaJadwal::findOrFail($request->peserta_jadwal_id);
+
+        // Guard: Jika sudah completed (di-force Admin)
+        if ($pesertaJadwal->status === 'completed') {
+            return response()->json([
+                'status' => 'force_reload',
+                'message' => 'Sesi ujian telah ditutup oleh Pengawas.'
+            ], 403);
+        }
+
+        // Guard: JIKA Admin memaksa lanjut mapel, dan mapel_id dikirim dari frontend
+        if ($request->has('mapel_id') && $pesertaJadwal->current_mapel_id != $request->mapel_id) {
+            return response()->json([
+                'status' => 'force_reload',
+                'message' => 'Sesi mapel telah berganti. Mengalihkan...'
+            ], 403);
+        }
 
         // Cek ownership
         if ($pesertaJadwal->user_id !== Auth::id()) {
@@ -361,80 +381,7 @@ class StudentController extends Controller
             abort(403);
         }
 
-        // Hitung nilai
-        $jawaban = JawabanPeserta::where('peserta_jadwal_id', $pesertaJadwal->id)
-            ->with('bankSoal')
-            ->get();
-
-        $totalNilai = 0;
-        foreach ($jawaban as $j) {
-            $soal = $j->bankSoal;
-            // Logic scoring tergantung tipe soal
-            $soal = $j->bankSoal;
-            $userJawaban = is_string($j->jawaban) ? json_decode($j->jawaban, true) : $j->jawaban;
-
-            // Logic scoring per tipe soal
-            if ($soal->tipe_soal === 'PG_TUNGGAL' || $soal->tipe_soal === 'PG') {
-                // Single Answer: Cari opsi yang dipilih user dan ambil skornya
-                $opsi = $soal->jawaban->where('id', $userJawaban)->first();
-                if ($opsi) {
-                    $totalNilai += $opsi->skor ?? 0;
-                }
-            } elseif ($soal->tipe_soal === 'PG_KOMPLEKS') {
-                if (is_array($userJawaban)) {
-                    // 1 & 2. Ambil opsi yang dipilih dan langsung jumlahkan skornya
-                    $skorKasar = $soal->jawaban->whereIn('id', $userJawaban)->sum('skor');
-
-                    // 3. Batasi Batas Bawah (Mencegah nilai minus pada soal tersebut)
-                    $skorAkhir = max(0, $skorKasar);
-
-                    $totalNilai += $skorAkhir;
-                }
-            } elseif ($soal->tipe_soal === 'BENAR_SALAH') {
-                // Format User Jawaban: { "id_jawaban_1": "BENAR", "id_jawaban_2": "SALAH" }
-                // Scoring: Cek setiap baris jawaban (sub-soal)
-                if (is_array($userJawaban)) {
-                    foreach ($soal->jawaban as $opsi) {
-                        $jawabanUser = $userJawaban[$opsi->id] ?? null;
-
-                        if ($jawabanUser) {
-                            $jawabanUser = strtoupper($jawabanUser);
-                            $kunci = strtoupper($opsi->kunci_jawaban ?? '');
-
-                            // Jika kunci eksplisit ada, bandingkan
-                            if ($kunci) {
-                                if ($jawabanUser === $kunci) {
-                                    $totalNilai += $opsi->skor ?? 0;
-                                }
-                            } else {
-                                // Fallback: Jika kunci null, asumsikan skor > 0 berarti kuncinya BENAR
-                                if ($opsi->skor > 0 && $jawabanUser === 'BENAR') {
-                                    $totalNilai += $opsi->skor;
-                                } elseif ($opsi->skor == 0 && $jawabanUser === 'SALAH') {
-                                    // Untuk BS, jika skor 0 dan user jawab SALAH, apakah ada poin? 
-                                    // Tergantung setup, tapi sementara ikuti skor yang ada di opsi.
-                                    $totalNilai += $opsi->skor; 
-                                }
-                            }
-                        }
-                    }
-                }
-            } elseif ($soal->tipe_soal === 'MENJODOHKAN') {
-                // Logic Menjodohkan (Pairing)
-                // Format: { "id_premise": "id_target" } atau sejenisnya
-                // Implementasi sederhana checking exact match per item jika struktur mendukung
-                // Untuk sementara skip detail kompleks, anggap similar to BS structure
-            } elseif ($soal->tipe_soal === 'ISIAN' || $soal->tipe_soal === 'URAIAN') {
-                // Manual Grading biasanya, atau exact string match untuk isian
-                // Jika Isian Singkat, bisa cek exact match ke kunci
-            }
-        }
-
-        $pesertaJadwal->update([
-            'status' => 'completed',
-            'waktu_selesai' => now(),
-            'total_nilai' => $totalNilai,
-        ]);
+        $pesertaJadwal->calculateAndSubmit(true);
 
         return redirect()->route('tryout.hasil', $pesertaJadwal);
     }

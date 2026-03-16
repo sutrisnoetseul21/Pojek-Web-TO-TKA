@@ -110,18 +110,30 @@ class PesertaJadwalResource extends Resource
                     }),
             ])
             ->defaultSort('waktu_mulai', 'desc')
-            ->poll('5s') // Refresh table every 5 seconds for real-time feel
+            ->poll('5s')
             ->filters([
                 Tables\Filters\SelectFilter::make('sekolah')
                     ->label('Sekolah')
                     ->relationship('user.sekolahRelation', 'nama_sekolah')
+                    ->visible(fn () => auth()->user()->hasRole('super_admin'))
                     ->searchable()
                     ->preload(),
                 Tables\Filters\SelectFilter::make('jadwal_tryout_id')
-                    ->label('Jadwal Aktif')
-                    ->options(\App\Models\JadwalTryout::where('is_active', true)->where('tgl_selesai', '>=', now()->subHours(5))->pluck('nama_sesi', 'id'))
-                    ->query(fn (Builder $query, array $data) => $query->when($data['value'], fn ($q) => $q->where('jadwal_tryout_id', $data['value'])))
-                    ->preload(),
+                    ->label('Pilih Sesi Ujian')
+                    ->options(
+                        \App\Models\JadwalTryout::with('paketTryout')
+                            ->where('is_active', true)
+                            ->get()
+                            ->mapWithKeys(fn ($j) => [$j->id => ($j->paketTryout?->nama_paket ?? 'Tanpa Paket') . ' - ' . $j->nama_sesi])
+                    )
+                    ->searchable()
+                    ->preload()
+                    ->query(function (Builder $query, array $data): Builder {
+                        if (empty($data['value'])) {
+                            return $query->where('jadwal_tryout_id', -1);
+                        }
+                        return $query->where('jadwal_tryout_id', $data['value']);
+                    }),
                 Tables\Filters\SelectFilter::make('status')
                     ->options([
                         'registered' => 'Belum Mulai',
@@ -130,24 +142,40 @@ class PesertaJadwalResource extends Resource
                         'timeout' => 'Timeout',
                         'disconnected' => 'Terputus',
                     ]),
-            ])
+            ], layout: \Filament\Tables\Enums\FiltersLayout::AboveContent)
+            ->filtersFormColumns(1)
+            ->emptyStateHeading('Pilih Sesi Ujian Terlebih Dahulu')
+            ->emptyStateDescription('Silakan pilih jadwal dari dropdown di atas untuk memunculkan data peserta.')
+            ->emptyStateIcon('heroicon-o-clipboard-document-list')
             ->actions([
                 Tables\Actions\ViewAction::make(),
+                Tables\Actions\Action::make('force_lanjut_mapel')
+                    ->label('Force Lanjut Mapel')
+                    ->icon('heroicon-o-arrow-right-circle')
+                    ->color('warning')
+                    ->requiresConfirmation()
+                    ->modalHeading('Paksa Lanjut Mapel')
+                    ->modalDescription('Apakah Anda yakin ingin memaksa peserta ini melompati mapel dan beralih ke materi selanjutnya?')
+                    ->visible(fn ($record) => $record->status === 'started')
+                    ->action(fn ($record) => $record->calculateAndSubmit(false)),
+
                 Tables\Actions\Action::make('force_submit')
-                    ->label('Force Submit')
+                    ->label('Force Selesai Total')
                     ->icon('heroicon-o-stop')
                     ->color('danger')
                     ->requiresConfirmation()
+                    ->modalHeading('Paksa Selesai Ujian')
+                    ->modalDescription('Aksi ini akan menghentikan seluruh rangkaian ujian siswa seketika dan mengunci akun. Lanjutkan?')
                     ->visible(fn ($record) => $record->status === 'started')
                     ->action(function ($record) {
-                        $record->update(['status' => 'completed', 'waktu_selesai' => now()]);
+                        $record->calculateAndSubmit(true);
                         
                         \App\Models\UjianActivityLog::create([
                             'peserta_jadwal_id' => $record->id,
                             'user_id' => $record->user_id,
                             'jadwal_tryout_id' => $record->jadwal_tryout_id,
                             'aktivitas' => 'force_submit',
-                            'keterangan' => 'Ujian dihentikan paksa oleh admin ' . auth()->user()->nama_lengkap,
+                            'keterangan' => 'Ujian dihentikan paksa (Selesai Total) oleh admin ' . auth()->user()->nama_lengkap,
                         ]);
                     }),
             ])

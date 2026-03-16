@@ -1159,8 +1159,19 @@
                 body: JSON.stringify({
                     peserta_jadwal_id: pesertaJadwalId,
                     bank_soal_id: soalId,
-                    jawaban: answers[soalId]
+                    jawaban: answers[soalId],
+                    mapel_id: mapelSections[currentMapelIndex].mapel_id
                 })
+            }).then(response => {
+                if (!response.ok && response.status === 403) {
+                    return response.json().then(data => {
+                        if (data.status === 'force_reload') {
+                            alert(data.message);
+                            window.location.reload();
+                        }
+                    });
+                }
+                return response;
             });
 
             renderSoal();
