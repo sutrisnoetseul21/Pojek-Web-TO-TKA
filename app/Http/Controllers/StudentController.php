@@ -382,19 +382,13 @@ class StudentController extends Controller
                 }
             } elseif ($soal->tipe_soal === 'PG_KOMPLEKS') {
                 if (is_array($userJawaban)) {
-                    $correctChoices = $soal->jawaban->whereIn('id', $userJawaban)->where('skor', '>', 0);
-                    $wrongChoices = $soal->jawaban->whereIn('id', $userJawaban)->where('skor', '<=', 0);
+                    // 1 & 2. Ambil opsi yang dipilih dan langsung jumlahkan skornya
+                    $skorKasar = $soal->jawaban->whereIn('id', $userJawaban)->sum('skor');
 
-                    $skorDidapat = $correctChoices->sum('skor');
+                    // 3. Batasi Batas Bawah (Mencegah nilai minus pada soal tersebut)
+                    $skorAkhir = max(0, $skorKasar);
 
-                    // Penalti: Setiap pilihan salah mengurangi skor sebesar bobot skor benar pertama (Fallback: 1)
-                    $penaltyAmount = $soal->jawaban->where('skor', '>', 0)->first()->skor ?? 1;
-                    $skorDidapat -= $wrongChoices->count() * $penaltyAmount;
-
-                    // Batas minimum skor per nomor adalah 0
-                    $skorDidapat = max(0, $skorDidapat);
-
-                    $totalNilai += $skorDidapat;
+                    $totalNilai += $skorAkhir;
                 }
             } elseif ($soal->tipe_soal === 'BENAR_SALAH') {
                 // Format User Jawaban: { "id_jawaban_1": "BENAR", "id_jawaban_2": "SALAH" }
