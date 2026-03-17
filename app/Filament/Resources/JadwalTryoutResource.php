@@ -147,7 +147,8 @@ class JadwalTryoutResource extends Resource
                 Tables\Columns\TextColumn::make('sekolah.nama_sekolah')
                     ->label('Sekolah')
                     ->searchable()
-                    ->sortable(),
+                    ->sortable()
+                    ->visible(fn () => auth()->user()->isSuperAdmin()),
                 Tables\Columns\TextColumn::make('nama_sesi')
                     ->label('Sesi')
                     ->searchable(),

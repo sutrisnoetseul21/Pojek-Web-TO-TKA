@@ -20,11 +20,13 @@ class PaketTryoutMapel extends Model
         'jumlah_soal',
         'waktu_mapel',
         'urutan',
+        'kategori_settings',
     ];
 
     protected $casts = [
         'soal_ids' => 'array',
         'kategori_ids' => 'array',
+        'kategori_settings' => 'array',
     ];
 
     // Relasi ke paket tryout
@@ -42,12 +44,43 @@ class PaketTryoutMapel extends Model
     // Method: Ambil soal dari kategori ini
     public function getSoal($randomize = true)
     {
-        // Mode MANUAL: ambil soal sesuai ID yang dipilih
+        // 1. Logika Baru: Menggunakan pengaturan per Kategori
+        if (!empty($this->kategori_settings)) {
+            $allSoal = collect();
+
+            foreach ($this->kategori_settings as $setting) {
+                $katId = $setting['kategori_id'] ?? null;
+                $mode = $setting['mode'] ?? 'ACAK';
+                $jumlah = $setting['jumlah_soal'] ?? 10;
+                $soalIds = $setting['soal_ids'] ?? [];
+
+                if (!$katId) continue;
+
+                $query = BankSoal::with(['jawaban', 'stimulus'])
+                    ->where('paket_id', $katId) // paket_id di BankSoal mewakili Kategori ID
+                    ->where('mapel_id', $this->mapel_id);
+
+                if ($mode === 'MANUAL' && !empty($soalIds)) {
+                    $query->whereIn('id', $soalIds);
+                    $allSoal = $allSoal->merge($query->get());
+                } elseif ($mode === 'SEMUA') {
+                    $allSoal = $allSoal->merge($query->get());
+                } else { // Mode ACAK
+                    if ($randomize) {
+                        $query->inRandomOrder();
+                    }
+                    $allSoal = $allSoal->merge($query->limit($jumlah)->get());
+                }
+            }
+
+            return $allSoal;
+        }
+
+        // 2. Berfungsi sebagai Fallback Struktur Lama (Kompatibilitas Mundur)
         if ($this->mode === 'MANUAL' && !empty($this->soal_ids)) {
             return BankSoal::with(['jawaban', 'stimulus'])->whereIn('id', $this->soal_ids)->get();
         }
 
-        // Mode ACAK: ambil soal random dari kategori
         $query = BankSoal::with(['jawaban', 'stimulus'])
             ->whereIn('paket_id', $this->kategori_ids ?? [])
             ->where('mapel_id', $this->mapel_id);

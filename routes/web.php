@@ -12,3 +12,5 @@ Route::middleware(['auth'])->group(function () {
     Route::get('/print/kartu-peserta', [KartuPesertaController::class, 'print'])
         ->name('print.kartu-peserta');
 });
+
+

@@ -150,31 +150,6 @@ class PaketTryoutResource extends Resource
                                                 $set('kategori_ids', []);
                                                 $set('soal_ids', []);
                                             }),
-                                        Forms\Components\CheckboxList::make('kategori_ids')
-                                            ->label('Kategori Sumber Soal')
-                                            ->options(function (callable $get) {
-                                                $mapelId = $get('mapel_id');
-                                                if (!$mapelId) return [];
-                                                return \App\Models\RefPaketSoal::where('mapel_id', $mapelId)->pluck('nama_paket', 'id');
-                                            })
-                                            ->required()
-                                            ->reactive()
-                                            ->disabled(fn(callable $get) => !$get('mapel_id'))
-                                            ->afterStateUpdated(fn(callable $set) => $set('soal_ids', []))
-                                            ->helperText('Pilih satu atau lebih kategori soal')
-                                            ->columnSpan(2)
-                                            ->columns(2)
-                                            ->gridDirection('row'),
-                                        Forms\Components\Select::make('mode')
-                                            ->label('Mode Pemilihan')
-                                            ->options([
-                                                'ACAK' => '🎲 Soal Acak',
-                                                'MANUAL' => '✅ Pilih Soal Manual',
-                                            ])
-                                            ->default('ACAK')
-                                            ->required()
-                                            ->reactive()
-                                            ->disabled(fn(callable $get) => empty($get('kategori_ids'))),
                                     ]),
 
                                 Forms\Components\Grid::make(4)
@@ -185,57 +160,87 @@ class PaketTryoutResource extends Resource
                                             ->default(30)
                                             ->required()
                                             ->minValue(1),
-
-                                        Forms\Components\TextInput::make('jumlah_soal')
-                                            ->label('Jumlah Soal Acak')
-                                            ->numeric()
-                                            ->default(10)
-                                            ->required(fn(callable $get) => $get('mode') === 'ACAK')
-                                            ->minValue(1)
-                                            ->visible(fn(callable $get) => $get('mode') === 'ACAK')
-                                            ->helperText(fn(callable $get) => !empty($get('kategori_ids'))
-                                                ? 'Tersedia: ' . \App\Models\BankSoal::whereIn('paket_id', $get('kategori_ids') ?? [])->where('mapel_id', $get('mapel_id'))->count() . ' soal'
-                                                : 'Pilih kategori dulu'),
                                     ]),
 
-                                Forms\Components\Section::make('Pilih Soal Manual')
-                                    ->visible(fn(callable $get) => $get('mode') === 'MANUAL')
+                                Forms\Components\Section::make('Kategori & Pengaturan Soal')
                                     ->schema([
-                                        Forms\Components\Group::make()
-                                            ->schema(function (callable $get) {
-                                                $mapelId = $get('mapel_id');
-                                                $kategoriIds = $get('kategori_ids');
-                                                if (!$mapelId || empty($kategoriIds)) return [];
-                                                return [
-                                                    Forms\Components\Placeholder::make('info_soal')
-                                                        ->content(function () use ($mapelId, $kategoriIds) {
-                                                            $count = \App\Models\BankSoal::whereIn('paket_id', $kategoriIds)->where('mapel_id', $mapelId)->count();
-                                                            return "Total tersedia: {$count} soal dari kategori dipilih.";
-                                                        }),
-                                                ];
-                                            }),
+                                        Forms\Components\Repeater::make('kategori_settings')
+                                            ->label('')
+                                            ->schema([
+                                                Forms\Components\Grid::make(4)
+                                                    ->schema([
+                                                        Forms\Components\Select::make('kategori_id')
+                                                            ->label('Kategori')
+                                                            ->options(function (callable $get) {
+                                                                $mapelId = $get('../../mapel_id'); 
+                                                                if (!$mapelId) return [];
+                                                                return \App\Models\RefPaketSoal::where('mapel_id', $mapelId)->pluck('nama_paket', 'id');
+                                                            })
+                                                            ->required()
+                                                            ->live()
+                                                            ->afterStateUpdated(fn (callable $set) => $set('soal_ids', [])),
 
-                                        Forms\Components\Hidden::make('soal_ids')
-                                            ->default([])
-                                            ->required(fn(callable $get) => $get('mode') === 'MANUAL'),
+                                                        Forms\Components\Select::make('mode')
+                                                            ->label('Mode')
+                                                            ->options([
+                                                                'ACAK' => '🎲 Acak',
+                                                                'MANUAL' => '✅ Manual',
+                                                                'SEMUA' => '📋 Semua Soal',
+                                                            ])
+                                                            ->default('ACAK')
+                                                            ->required()
+                                                            ->live(),
 
-                                        Forms\Components\Placeholder::make('soal_selector_ui')
-                                            ->label('Daftar Soal')
-                                            ->content(function (callable $get, \Filament\Forms\Components\Placeholder $component) {
-                                                $mapelId = $get('mapel_id');
-                                                $kategoriIds = $get('kategori_ids');
-                                                if (!$mapelId || empty($kategoriIds)) return 'Pilih Mata Pelajaran dan Kategori Soal terlebih dahulu.';
+                                                        Forms\Components\TextInput::make('jumlah_soal')
+                                                            ->label('Jumlah Soal')
+                                                            ->numeric()
+                                                            ->default(10)
+                                                            ->required(fn(callable $get) => $get('mode') === 'ACAK')
+                                                            ->visible(fn(callable $get) => $get('mode') === 'ACAK')
+                                                            ->helperText(function(callable $get) {
+                                                                $katId = $get('kategori_id');
+                                                                $mapelId = $get('../../mapel_id');
+                                                                if ($katId && $mapelId) {
+                                                                    $count = \App\Models\BankSoal::where('paket_id', $katId)->where('mapel_id', $mapelId)->count();
+                                                                    return "Tersedia: {$count} soal";
+                                                                }
+                                                                return 'Pilih kategori dulu';
+                                                            }),
+                                                    ]),
 
-                                                $soals = \App\Models\BankSoal::with(['paket', 'stimulus', 'jawaban'])
-                                                    ->whereIn('paket_id', $kategoriIds)
-                                                    ->where('mapel_id', $mapelId)
-                                                    ->get();
+                                                Forms\Components\Section::make('Pilih Soal Manual')
+                                                    ->visible(fn(callable $get) => $get('mode') === 'MANUAL')
+                                                    ->schema([
+                                                        Forms\Components\Hidden::make('soal_ids')
+                                                            ->default([])
+                                                            ->required(fn(callable $get) => $get('mode') === 'MANUAL'),
 
-                                                return view('filament.forms.components.soal-selector', [
-                                                    'soals' => $soals,
-                                                    'componentStatePath' => $component->getStatePath(),
-                                                ]);
-                                            }),
+                                                        Forms\Components\Placeholder::make('soal_selector_ui')
+                                                            ->label('Daftar Soal')
+                                                            ->content(function (callable $get, \Filament\Forms\Components\Placeholder $component) {
+                                                                $katId = $get('kategori_id');
+                                                                $mapelId = $get('../../mapel_id');
+                                                                if (!$katId || !$mapelId) return 'Pilih Kategori terlebih dahulu.';
+
+                                                                $soals = \App\Models\BankSoal::with(['paket', 'stimulus', 'jawaban'])
+                                                                    ->where('paket_id', $katId)
+                                                                    ->where('mapel_id', $mapelId)
+                                                                    ->get();
+
+                                                                return view('filament.forms.components.soal-selector', [
+                                                                    'soals' => $soals,
+                                                                    'componentStatePath' => $component->getStatePath(),
+                                                                ]);
+                                                            }),
+                                                    ]),
+                                            ])
+                                            ->columnSpanFull()
+                                            ->defaultItems(1)
+                                            ->addActionLabel('+ Tambah Kategori')
+                                            ->itemLabel(
+                                                fn(array $state): ?string =>
+                                                \App\Models\RefPaketSoal::find($state['kategori_id'] ?? null)?->nama_paket ?? 'Kategori Baru'
+                                            ),
                                     ]),
                             ])
                             ->reorderable()
@@ -258,6 +263,10 @@ class PaketTryoutResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\TextColumn::make('kode')
+                    ->label('Kode Paket')
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('nama_paket')
                     ->label('Nama Paket')
                     ->searchable()
@@ -273,7 +282,8 @@ class PaketTryoutResource extends Resource
                     ->label('Sekolah')
                     ->placeholder('GLOBAL')
                     ->sortable()
-                    ->toggleable(),
+                    ->toggleable()
+                    ->visible(fn () => auth()->user()->isSuperAdmin()),
                 Tables\Columns\TextColumn::make('mapel_items_count')
                     ->label('Mapel')
                     ->counts('mapelItems')
