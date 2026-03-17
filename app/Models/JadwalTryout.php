@@ -20,6 +20,9 @@ class JadwalTryout extends Model
         'kuota_peserta',
         'is_active',
         'token',
+        'token_released_at',
+        'token_active_until',
+        'is_token_active',
     ];
 
     protected $casts = [
@@ -28,6 +31,9 @@ class JadwalTryout extends Model
         'tgl_mulai' => 'datetime',
         'tgl_selesai' => 'datetime',
         'is_active' => 'boolean',
+        'token_released_at' => 'datetime',
+        'token_active_until' => 'datetime',
+        'is_token_active' => 'boolean',
     ];
 
     // Boot method untuk auto-generate token & auto-sync peserta
@@ -38,6 +44,12 @@ class JadwalTryout extends Model
         static::creating(function ($jadwal) {
             if (!$jadwal->token) {
                 $jadwal->token = strtoupper(substr(md5(uniqid()), 0, 6));
+            }
+        });
+
+        static::saving(function ($jadwal) {
+            if ($jadwal->is_active === false) {
+                $jadwal->is_token_active = false;
             }
         });
 

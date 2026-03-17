@@ -73,9 +73,9 @@ class LihatSoal extends Page
                     'pertanyaan' => $soal->pertanyaan,
                     'bobot' => $soal->bobot ?? 1,
                     'jawaban' => $soal->jawaban->map(fn($j) => [
-                        'teks' => $j->jawaban, // Di model BankJawaban kolomnya 'jawaban' bukan 'teks_jawaban' (cek schema/model jika ragu, tadi di dummy data pake 'jawaban')
-                        'skor' => $j->is_benar ? ($soal->bobot ?? 1) : 0, // Logic sederhana skor
-                        'kunci' => $j->is_benar ? 'BENAR' : 'SALAH',
+                        'teks' => $j->teks_jawaban, 
+                        'skor' => $j->skor ?? 0, 
+                        'kunci' => ($j->skor ?? 0) > 0 ? 'BENAR' : 'SALAH',
                     ])->toArray(),
                 ];
             }

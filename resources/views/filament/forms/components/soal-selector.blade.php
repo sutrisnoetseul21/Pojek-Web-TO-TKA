@@ -15,6 +15,18 @@
         }, {});
     }
 }">
+    <style>
+        .jawaban-teks, .jawaban-teks * {
+            background-color: transparent !important;
+            color: #1a1a1a !important; /* Hitam Solid untuk Terang */
+        }
+        .dark .jawaban-teks, .dark .jawaban-teks * {
+            color: #f3f4f6 !important; /* Putih/Abu Sangat Terang untuk Gelap */
+        }
+        .dark .hover-row:hover {
+            background-color: #1f2937 !important; /* bg-gray-800 */
+        }
+    </style>
     <div class="space-y-4">
         <template x-for="(group, paketName) in groupedSoals" :key="paketName">
             <div class="border rounded-lg overflow-hidden dark:border-gray-700">
@@ -23,13 +35,13 @@
                 <div class="divide-y divide-gray-100 dark:divide-gray-700 bg-white dark:bg-gray-900">
                     <template x-for="soal in group" :key="soal.id">
                         <div
-                            class="flex items-start gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition group">
+                            class="flex items-start gap-3 p-3 hover:bg-gray-50 dark:hover:bg-gray-800 transition group hover-row">
                             <div class="pt-1">
                                 <input type="checkbox" :value="soal.id" x-model="state"
                                     class="border-gray-300 dark:border-gray-600 rounded text-primary-600 focus:ring-primary-500 dark:bg-gray-700">
                             </div>
                             <div class="flex-1 min-w-0 grid gap-1">
-                                <div class="text-sm text-gray-900 dark:text-gray-100 line-clamp-2"
+                                <div class="text-sm text-gray-900 dark:text-gray-100 line-clamp-2 jawaban-teks"
                                     x-html="soal.pertanyaan"></div>
                                 <div class="text-xs text-gray-500 dark:text-gray-400">
                                     <span x-text="soal.tipe_soal"></span>
@@ -133,8 +145,8 @@
                 </template>
             </div>
 
-            <div class="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50 shrink-0 text-right">
-                <button @click="modalOpen = false"
+            <div class="p-4 border-t dark:border-gray-700 bg-gray-50 dark:bg-gray-800 shrink-0 text-right">
+                <button type="button" @click="modalOpen = false"
                     class="px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300 text-sm font-medium transition">Tutup</button>
             </div>
         </div>

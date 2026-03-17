@@ -1,4 +1,17 @@
 <x-filament-panels::page>
+    <style>
+        .jawaban-teks, .jawaban-teks * {
+            background-color: transparent !important;
+            color: #1a1a1a !important; /* Hitam Solid untuk Terang */
+        }
+        .dark .jawaban-teks, .dark .jawaban-teks * {
+            color: #f3f4f6 !important; /* Putih/Abu Sangat Terang untuk Gelap */
+        }
+        .dark .hover-row:hover {
+            background-color: rgba(55, 65, 81, 0.4) !important; /* bg-gray-700/40 */
+        }
+    </style>
+
     {{-- Header Info --}}
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6 mb-6">
         <div class="flex items-center justify-between">
@@ -55,7 +68,7 @@
             {{-- Soal List --}}
             <div class="divide-y divide-gray-100 dark:divide-gray-700">
                 @forelse ($mapel['soal_list'] as $soal)
-                    <div class="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors">
+                    <div class="p-6 hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors hover-row">
                         {{-- Soal Header --}}
                         <div class="flex items-start gap-4">
                             <div class="flex-shrink-0 w-10 h-10 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center">
@@ -94,12 +107,12 @@
                                                 $isCorrect = ($jawaban['kunci'] === 'BENAR' || $jawaban['skor'] > 0);
                                             @endphp
                                             <div class="flex items-start gap-2 px-3 py-2 rounded-lg text-sm
-                                                {{ $isCorrect ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-700/30 border border-gray-100 dark:border-gray-600' }}
+                                                {{ $isCorrect ? 'bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-800' : 'bg-gray-50 dark:bg-gray-700 border border-gray-100 dark:border-gray-600' }}
                                             ">
-                                                <span class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold
-                                                    {{ $isCorrect ? 'bg-green-500 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300' }}
-                                                ">{{ $label }}</span>
-                                                <div class="flex-1 text-gray-700 dark:text-gray-300">{!! $jawaban['teks'] !!}</div>
+                                                <span class="flex-shrink-0 w-6 h-6 rounded-full flex items-center justify-center text-xs font-bold" 
+                                                    style="background-color: {{ $isCorrect ? '#22c55e' : '#4b5563' }} !important; color: #ffffff !important;"
+                                                >{{ $label }}</span>
+                                                <div class="flex-1 text-gray-700 dark:text-gray-300 jawaban-teks">{!! $jawaban['teks'] !!}</div>
                                                 <span class="flex-shrink-0 text-xs font-mono
                                                     {{ $jawaban['skor'] > 0 ? 'text-green-600' : ($jawaban['skor'] < 0 ? 'text-red-500' : 'text-gray-400') }}
                                                 ">{{ $jawaban['skor'] > 0 ? '+' : '' }}{{ $jawaban['skor'] }}</span>

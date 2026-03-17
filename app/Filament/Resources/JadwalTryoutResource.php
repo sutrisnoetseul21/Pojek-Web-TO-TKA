@@ -72,7 +72,8 @@ class JadwalTryoutResource extends Resource
                                         $q->whereNull('sekolah_id')
                                           ->when($sekolahId, fn ($query) => $query->orWhere('sekolah_id', $sekolahId));
                                     })
-                                    ->pluck('nama_paket', 'id');
+                                    ->get()
+                                    ->mapWithKeys(fn ($p) => [$p->id => ($p->kode ? "[{$p->kode}] " : "") . $p->nama_paket]);
                             })
                             ->searchable()
                             ->required()
@@ -114,50 +115,63 @@ class JadwalTryoutResource extends Resource
                             ->label('Jadwal Aktif')
                             ->default(true)
                             ->helperText('Jadwal aktif akan tampil untuk siswa'),
-                    ])->columns(2),
+                        Forms\Components\Toggle::make('is_token_active')
+                            ->label('Izinkan Rilis Token')
+                            ->default(true)
+                            ->helperText('Jika non-aktif, proktor tidak bisa merilis token di monitoring.'),
+                    ])->columns(1),
             ]);
     }
 
     public static function table(Table $table): Table
     {
         return $table
+            ->poll('10s') // 🔄 Auto-Refresh setiap 10 detik agar sinkron dengan status tes
             ->columns([
+                Tables\Columns\TextColumn::make('index')
+                    ->label('No')
+                    ->rowIndex(),
+                Tables\Columns\ToggleColumn::make('is_active')
+                    ->label('Status Tes'),
+                Tables\Columns\ToggleColumn::make('is_token_active')
+                    ->label('Toggle Token')
+                    ->disabled(fn (JadwalTryout $record): bool => !$record->is_active),
+                Tables\Columns\TextColumn::make('paketTryout.kode')
+                    ->label('Kode')
+                    ->searchable()
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('paketTryout.nama_paket')
-                    ->label('Paket Tryout')
+                    ->label('Paket TO')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('sekolah.nama_sekolah')
                     ->label('Sekolah')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('nama_sesi')
+                    ->label('Sesi')
+                    ->searchable(),
                 Tables\Columns\TextColumn::make('kelases.nama_kelas')
                     ->label('Kelas')
                     ->badge()
                     ->separator(', '),
-                Tables\Columns\TextColumn::make('nama_sesi')
-                    ->label('Sesi')
-                    ->searchable(),
                 Tables\Columns\TextColumn::make('token')
                     ->label('Token')
                     ->badge()
                     ->color('warning')
                     ->copyable()
                     ->searchable()
-                    ->fontFamily('mono'),
+                    ->fontFamily('mono')
+                    ->state(function (JadwalTryout $record) {
+                        return $record->is_token_active ? $record->token : '-';
+                    }),
                 Tables\Columns\TextColumn::make('tgl_mulai')
                     ->label('Mulai')
-                    ->dateTime('d M Y, H:i')
+                    ->date('d/m/Y')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('tgl_selesai')
                     ->label('Selesai')
-                    ->dateTime('d M Y, H:i')
-                    ->sortable(),
-                Tables\Columns\TextColumn::make('kuota_peserta')
-                    ->label('Kuota')
-                    ->getStateUsing(fn($record) => $record->kuota_peserta ?? '∞'),
-                Tables\Columns\TextColumn::make('peserta_count')
-                    ->label('Peserta')
-                    ->counts('peserta')
+                    ->date('d/m/Y')
                     ->sortable(),
                 Tables\Columns\BadgeColumn::make('status')
                     ->label('Status')
@@ -173,9 +187,6 @@ class JadwalTryoutResource extends Resource
                         'SELESAI' => 'Selesai',
                         default => $state,
                     }),
-                Tables\Columns\IconColumn::make('is_active')
-                    ->label('Aktif')
-                    ->boolean(),
             ])
             ->defaultSort('tgl_mulai', 'desc')
             ->filters([

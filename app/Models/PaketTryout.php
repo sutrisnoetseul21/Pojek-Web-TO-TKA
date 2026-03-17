@@ -14,6 +14,7 @@ class PaketTryout extends Model
     protected $fillable = [
         'sekolah_id',
         'nama_paket',
+        'kode',
         'deskripsi',
         'jenjang',
         'total_waktu',
