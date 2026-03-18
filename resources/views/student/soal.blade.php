@@ -728,9 +728,9 @@
                 justify-content: center;
             }
 
-            .nav-btn span {
-                display: none; /* Hide long button labels if any */
-            }
+            /* .nav-btn span {
+                display: none; 
+            } */
 
             .modal {
                 width: 95%;
@@ -803,31 +803,31 @@
                 <div class="soal-content" id="soalContent"></div>
                 <div class="options" id="optionsContainer"></div>
 
-                <!-- Navigation Divider & Buttons (Image 2 style) -->
+                <!-- Navigation Divider & Buttons (Image 2 style with text) -->
                 <div class="options-nav" style="margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem;">
-                    <button class="nav-btn nav-btn-prev" id="btnPrev" onclick="prevSoal()">
+                    <button class="nav-btn nav-btn-prev" id="btnPrev" onclick="prevSoal()" style="padding: 0.625rem 1rem; display: flex; align-items: center; gap: 0.4rem; border-radius: 0.5rem;">
                         ‹ <span class="hidden md:inline">Soal sebelumnya</span><span class="md:hidden">Sblm</span>
                     </button>
 
                     <div style="flex: 1; display: flex; justify-content: center;">
-                        <button class="nav-btn nav-btn-ragu" id="btnRagu" onclick="toggleRagu()">
+                        <button class="nav-btn nav-btn-ragu" id="btnRagu" onclick="toggleRagu()" style="padding: 0.625rem 1rem; display: flex; align-items: center; gap: 0.5rem; border-radius: 0.5rem;">
                             <span class="hidden md:inline">Ragu-ragu</span><span class="md:hidden">Ragu</span>
-                            <input type="checkbox" id="raguCheck" style="width: 15px; height: 15px; pointer-events: none; margin-left: 0.5rem; accent-color: white;">
+                            <input type="checkbox" id="raguCheck" style="width: 15px; height: 15px; pointer-events: none; accent-color: white;">
                         </button>
                     </div>
 
-                    <div>
-                        <button class="nav-btn nav-btn-next" id="btnNext" onclick="nextSoal()">
+                    <div style="display: flex; gap: 0.5rem;">
+                        <button class="nav-btn nav-btn-next" id="btnNext" onclick="nextSoal()" style="padding: 0.625rem 1rem; display: flex; align-items: center; gap: 0.4rem; border-radius: 0.5rem;">
                             <span class="hidden md:inline">Soal berikutnya</span><span class="md:hidden">Lanjt</span> ›
                         </button>
 
-                        <button class="nav-btn nav-btn-lanjut-mapel" id="btnLanjutMapel" onclick="lanjutMapel()" style="display:none;">
+                        <button class="nav-btn nav-btn-lanjut-mapel" id="btnLanjutMapel" onclick="lanjutMapel()" style="display:none; padding: 0.625rem 1.25rem; border-radius: 0.5rem;">
                             Lanjt Mapel ▸
                         </button>
 
                         <a class="nav-btn nav-btn-selesai" id="btnSelesai" href="{{ route('tryout.selesai', $pesertaJadwal) }}"
                             onclick="localStorage.removeItem('currentMapelIndex_' + pesertaJadwalId); localStorage.removeItem('mapelTimers_' + pesertaJadwalId);"
-                            style="display:none; text-decoration:none;">
+                            style="display:none; text-decoration:none; padding: 0.625rem 1.25rem; border-radius: 0.5rem;">
                             ✅ Selesai
                         </a>
                     </div>
