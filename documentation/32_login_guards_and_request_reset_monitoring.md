@@ -32,9 +32,10 @@ Menu antrean di panel `/admin/request-reset-login` mengadopsi mekanisme mandiri 
 
 ---
 
-## ⚙️ 3. Perubahan Pendukung (Database)
-*   Menambahkan kolom `request_reset_at` (Timestamp, Nullable) ke tabel `peserta_jadwal`.
-*   Mengaktifkan sync auto `current_mapel_id` demi mencegah pop-up *Sesi Mapel Berganti* ketika peserta berpindah materi ujian secara legal di browser lokal.
+## ⚙️ 3. Perubahan Pendukung
+*   **Database**: Menambahkan kolom `request_reset_at` (Timestamp, Nullable) ke tabel `peserta_jadwal`.
+*   **Auto-Sync Mapel**: Sync `current_mapel_id` agar perpindahan mapel legal tidak memicu error benturan validasi (*Guard*).
+*   **Enforce Token**: Menonaktifkan *Auto-Skip* halaman biodata bagi siswa yang statusnya `started`. Ini memaksa siswa mengetik ulang Token valid setiap kali Re-login demi keamanan optimal.
 
 ---
 
