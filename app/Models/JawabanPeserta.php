@@ -9,6 +9,8 @@ class JawabanPeserta extends Model
 {
     protected $table = 'jawaban_peserta';
 
+    protected $touches = ['pesertaJadwal'];
+
     protected $fillable = [
         'peserta_jadwal_id',
         'bank_soal_id',

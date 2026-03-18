@@ -128,6 +128,12 @@ class PesertaJadwal extends Model
         return $this->belongsTo(JadwalTryout::class);
     }
 
+    // Relasi ke Mapel Saat Ini (Subtes)
+    public function currentMapel()
+    {
+        return $this->belongsTo(RefMapel::class, 'current_mapel_id');
+    }
+
     // Relasi ke jawaban peserta
     public function jawabanPeserta()
     {
