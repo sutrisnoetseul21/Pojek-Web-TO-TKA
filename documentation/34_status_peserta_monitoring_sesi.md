@@ -31,6 +31,7 @@ Sebagai bagian dari standarisasi sistem Monitoring Ujian (Baru), rute/file lama 
 1. `BantuanPesertaResource`
 2. `MonitoringSesi` Page
 3. `PesertaJadwalResource`
+4. `UjianActivityLogResource`
 
 ---
 
