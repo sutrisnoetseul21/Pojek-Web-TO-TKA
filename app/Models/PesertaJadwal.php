@@ -93,7 +93,7 @@ class PesertaJadwal extends Model
                         // Jika ada mapel selanjutnya: Set current_mapel_id, Reset Timer
                         $this->update([
                             'current_mapel_id' => $nextMapelItem->mapel_id,
-                            'sisa_waktu' => $nextMapelItem->waktu_mapel, // Ambil alokasi waktu mapel baru
+                            'sisa_waktu' => $nextMapelItem->waktu_mapel * 60, // Ambil alokasi waktu mapel baru (dalam detik)
                             'waktu_mulai' => now(), // reset timer
                             'total_nilai' => $totalNilai,
                         ]);

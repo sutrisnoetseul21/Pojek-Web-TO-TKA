@@ -939,12 +939,22 @@
             }
 
             const storedTimers = localStorage.getItem('mapelTimers_' + pesertaJadwalId);
+            const dbSisaWaktu = {{ $pesertaJadwal->sisa_waktu ?? 'null' }};
+
             if (storedTimers !== null) {
                 mapelTimers = JSON.parse(storedTimers);
+                // Sinkronisasikan jika DB memiliki waktu lebih sedikit (mencegah manipulasi localStorage atau saat pindah device)
+                if (dbSisaWaktu !== null && dbSisaWaktu < mapelTimers[currentMapelIndex]) {
+                     mapelTimers[currentMapelIndex] = parseInt(dbSisaWaktu);
+                }
             } else {
                 // Setup per-mapel timers
                 mapelSections.forEach((section, i) => {
-                    mapelTimers[i] = section.waktu_menit * 60;
+                    if (i === currentMapelIndex && dbSisaWaktu !== null) {
+                        mapelTimers[i] = parseInt(dbSisaWaktu);
+                    } else {
+                        mapelTimers[i] = section.waktu_menit * 60;
+                    }
                 });
                 localStorage.setItem('mapelTimers_' + pesertaJadwalId, JSON.stringify(mapelTimers));
             }
@@ -1163,17 +1173,18 @@
                 answers[soalId] = value;
             }
 
-            fetch("{{ route('tryout.jawab') }}", {
+            fetch('{{ route('tryout.simpan_jawaban') }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
                 },
                 body: JSON.stringify({
                     peserta_jadwal_id: pesertaJadwalId,
                     bank_soal_id: soalId,
-                    jawaban: answers[soalId],
-                    mapel_id: mapelSections[currentMapelIndex].mapel_id
+                    jawaban: value,
+                    mapel_id: mapelSections[currentMapelIndex].mapel_id,
+                    sisa_waktu: mapelTimers[currentMapelIndex] // Sinkronisasi timer per mapel
                 })
             }).then(response => {
                 if (!response.ok && response.status === 403) {

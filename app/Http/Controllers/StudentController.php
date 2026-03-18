@@ -271,13 +271,12 @@ class StudentController extends Controller
             return back()->withErrors(['error' => 'Status Anda belum diaktifkan oleh Pengawas. Silakan tunggu.']);
         }
 
-        $totalWaktu = $jadwal->paketTryout->mapelItems->sum('waktu_mapel');
         $firstMapel = $jadwal->paketTryout->mapelItems()->orderBy('urutan')->first();
 
         $pesertaJadwal->update([
             'status' => 'started',
             'waktu_mulai' => now(),
-            'sisa_waktu' => $totalWaktu,
+            'sisa_waktu' => $firstMapel ? ($firstMapel->waktu_mapel * 60) : 0,
             'current_mapel_id' => $firstMapel?->mapel_id,
         ]);
 
@@ -358,11 +357,16 @@ class StudentController extends Controller
             ], 403);
         }
 
-        // Sinkronisasi current_mapel_id ketika peserta berpindah mapel di frontend
+        // Sinkronisasi sinkron mapel dan waktu dari frontend
+        $updates = [];
         if ($request->has('mapel_id') && $pesertaJadwal->current_mapel_id != $request->mapel_id) {
-            $pesertaJadwal->update([
-                'current_mapel_id' => $request->mapel_id
-            ]);
+            $updates['current_mapel_id'] = $request->mapel_id;
+        }
+        if ($request->has('sisa_waktu') && is_numeric($request->sisa_waktu)) {
+            $updates['sisa_waktu'] = $request->sisa_waktu;
+        }
+        if (!empty($updates)) {
+            $pesertaJadwal->update($updates);
         }
 
         // Cek ownership
