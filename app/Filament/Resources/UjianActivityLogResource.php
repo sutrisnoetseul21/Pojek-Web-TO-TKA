@@ -20,7 +20,7 @@ class UjianActivityLogResource extends Resource
     protected static ?string $navigationIcon = 'heroicon-o-document-magnifying-glass';
     protected static ?string $navigationLabel = 'Riwayat Aktivitas Peserta';
     protected static ?string $title = 'Riwayat Aktivitas';
-    protected static ?string $navigationGroup = 'Monitoring Ujian';
+    protected static ?string $navigationGroup = 'LOG';
 
     public static function canCreate(): bool
     {
