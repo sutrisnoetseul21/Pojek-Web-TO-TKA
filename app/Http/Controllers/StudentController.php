@@ -45,6 +45,42 @@ class StudentController extends Controller
             ])->withInput();
         }
 
+        // 🛑 Guard 1: Cek apakah status sudah diaktifkan Proktor hari ini
+        $todayJadwalIds = \App\Models\JadwalTryout::where('is_active', true)
+            ->where('tgl_mulai', '<=', now()->endOfDay())
+            ->where('tgl_selesai', '>=', now()->startOfDay())
+            ->pluck('id');
+
+        $pesertaJadwal = \App\Models\PesertaJadwal::where('user_id', $user->id)
+            ->whereIn('jadwal_tryout_id', $todayJadwalIds)
+            ->first();
+
+        if (!$pesertaJadwal) {
+            return back()->withErrors([
+                'username' => 'Tidak ada jadwal ujian aktif untuk Anda hari ini.',
+            ])->withInput();
+        }
+
+        if ($pesertaJadwal->status === 'registered') {
+            return back()->withErrors([
+                'username' => 'Username belum diaktifkan oleh Proktor.',
+            ])->withInput();
+        }
+
+        // 🛑 Guard 2: Cek Concurrent Login
+        $hasActiveSession = \Illuminate\Support\Facades\DB::table('sessions')
+            ->where('user_id', $user->id)
+            ->exists();
+
+        if ($hasActiveSession) {
+            return back()->withErrors([
+                'username' => 'Username Anda sedang digunakan oleh perangkat lain, silakan hubungi Proktor untuk mereset login.',
+            ])->with([
+                'can_request_reset' => true,
+                'peserta_jadwal_id' => $pesertaJadwal->id,
+            ])->withInput();
+        }
+
         Auth::login($user);
 
         // Jika biodata belum lengkap, redirect ke form biodata
@@ -52,8 +88,24 @@ class StudentController extends Controller
             return redirect()->route('tryout.biodata');
         }
 
-        // Jika sudah lengkap, redirect ke halaman utama dengan pilihan input token
         return redirect()->route('tryout.biodata');
+    }
+
+    /**
+     * Ajukan Request Reset ke Proktor
+     */
+    public function requestReset(\Illuminate\Http\Request $request)
+    {
+        $request->validate([
+            'peserta_jadwal_id' => 'required|exists:peserta_jadwal,id',
+        ]);
+
+        $pesertaJadwal = \App\Models\PesertaJadwal::findOrFail($request->peserta_jadwal_id);
+        $pesertaJadwal->update([
+            'request_reset_at' => now()
+        ]);
+
+        return back()->with('success_request', 'Permintaan reset login berhasil diajukan ke Proktor. Silakan tunggu persetujuan.');
     }
 
     /**
@@ -167,17 +219,17 @@ class StudentController extends Controller
             ->where('jadwal_tryout_id', $jadwal->id)
             ->firstOrFail();
 
-        // Jika sudah started, redirect ke soal
-        if ($pesertaJadwal->status === 'started') {
+        if (in_array($pesertaJadwal->status, ['started', 'working'])) {
             return redirect()->route('tryout.soal', $pesertaJadwal);
         }
 
-        // Jika sudah completed, redirect ke hasil
         if ($pesertaJadwal->status === 'completed') {
             return redirect()->route('tryout.hasil', $pesertaJadwal);
         }
 
-        // Hitung total waktu dari paket
+        // 🛑 Lock jika status masih registered (Non Active)
+        $isLocked = ($pesertaJadwal->status === 'registered');
+
         $paket = $jadwal->paketTryout;
         $totalWaktu = $paket->mapelItems->sum('waktu_mapel');
         $totalSoal = $paket->mapelItems->sum(function ($item) {
@@ -187,7 +239,6 @@ class StudentController extends Controller
             return $item->jumlah_soal;
         });
 
-        // Ambil daftar mapel + info
         $mapelList = $paket->mapelItems()->with('mapel')->orderBy('urutan')->get();
 
         return view('student.konfirmasi', [
@@ -197,6 +248,7 @@ class StudentController extends Controller
             'totalWaktu' => $totalWaktu,
             'totalSoal' => $totalSoal,
             'mapelList' => $mapelList,
+            'isLocked' => $isLocked,
         ]);
     }
 
@@ -211,20 +263,22 @@ class StudentController extends Controller
             ->where('jadwal_tryout_id', $jadwal->id)
             ->firstOrFail();
 
-        if ($pesertaJadwal->status !== 'registered') {
+        if (in_array($pesertaJadwal->status, ['started', 'working'])) {
             return redirect()->route('tryout.soal', $pesertaJadwal);
         }
 
-        // Hitung total waktu
-        $totalWaktu = $jadwal->paketTryout->mapelItems->sum('waktu_mapel');
+        // 🛑 Guard: Jangan izinkan jika belum di-Assign oleh proktor
+        if ($pesertaJadwal->status === 'registered') {
+            return back()->withErrors(['error' => 'Status Anda belum diaktifkan oleh Pengawas. Silakan tunggu.']);
+        }
 
+        $totalWaktu = $jadwal->paketTryout->mapelItems->sum('waktu_mapel');
         $firstMapel = $jadwal->paketTryout->mapelItems()->orderBy('urutan')->first();
 
-        // Update status dan waktu mulai
         $pesertaJadwal->update([
             'status' => 'started',
             'waktu_mulai' => now(),
-            'sisa_waktu' => $totalWaktu, // dalam menit
+            'sisa_waktu' => $totalWaktu,
             'current_mapel_id' => $firstMapel?->mapel_id,
         ]);
 
@@ -243,6 +297,11 @@ class StudentController extends Controller
 
         if ($pesertaJadwal->status === 'completed') {
             return redirect()->route('tryout.hasil', $pesertaJadwal);
+        }
+
+        // 🛑 Hanya boleh masuk jika status 'started' atau 'working'
+        if (!in_array($pesertaJadwal->status, ['started', 'working'])) {
+            return redirect()->route('tryout.konfirmasi', $pesertaJadwal->jadwalTryout);
         }
 
         $jadwal = $pesertaJadwal->jadwalTryout;
@@ -300,12 +359,11 @@ class StudentController extends Controller
             ], 403);
         }
 
-        // Guard: JIKA Admin memaksa lanjut mapel, dan mapel_id dikirim dari frontend
+        // Sinkronisasi current_mapel_id ketika peserta berpindah mapel di frontend
         if ($request->has('mapel_id') && $pesertaJadwal->current_mapel_id != $request->mapel_id) {
-            return response()->json([
-                'status' => 'force_reload',
-                'message' => 'Sesi mapel telah berganti. Mengalihkan...'
-            ], 403);
+            $pesertaJadwal->update([
+                'current_mapel_id' => $request->mapel_id
+            ]);
         }
 
         // Cek ownership

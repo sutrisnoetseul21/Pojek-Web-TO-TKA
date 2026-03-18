@@ -18,6 +18,8 @@ Route::prefix('tryout')->name('tryout.')->group(function () {
         Route::post('/login', [StudentController::class, 'login']);
     });
 
+    Route::post('/request-reset', [StudentController::class, 'requestReset'])->name('requestReset');
+
     // Authenticated routes (sudah login sebagai peserta)
     Route::middleware('auth')->group(function () {
         Route::get('/biodata', [StudentController::class, 'showBiodata'])->name('biodata');

@@ -140,6 +140,11 @@ class BantuanPesertaResource extends Resource
                     ->action(function ($record) {
                         $record->update(['status' => 'registered', 'waktu_mulai' => null, 'waktu_selesai' => null]);
                         
+                        // 🛑 Bersihkan sesi di perangkat lain agar bisa login kembali
+                        \Illuminate\Support\Facades\DB::table('sessions')
+                            ->where('user_id', $record->user_id)
+                            ->delete();
+
                         \App\Models\UjianBantuanLog::create([
                             'peserta_jadwal_id' => $record->id,
                             'admin_user_id' => auth()->id(),
@@ -155,6 +160,11 @@ class BantuanPesertaResource extends Resource
                     ->action(function ($record) {
                         $record->update(['status' => 'started']);
                         
+                        // 🛑 Bersihkan sesi di perangkat lain agar bisa login kembali
+                        \Illuminate\Support\Facades\DB::table('sessions')
+                            ->where('user_id', $record->user_id)
+                            ->delete();
+
                         \App\Models\UjianBantuanLog::create([
                             'peserta_jadwal_id' => $record->id,
                             'admin_user_id' => auth()->id(),

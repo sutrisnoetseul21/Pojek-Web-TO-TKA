@@ -37,39 +37,95 @@ class KelompokTes extends Page implements HasTable
     public function table(Table $table): Table
     {
         return $table
-            ->query(PesertaJadwal::query()->with(['user', 'jadwalTryout']))
+            ->query(PesertaJadwal::query()
+                ->whereHas('jadwalTryout', function ($q) {
+                    $q->where('is_active', true)
+                      ->where('tgl_mulai', '<=', now()->endOfDay())
+                      ->where('tgl_selesai', '>=', now()->startOfDay());
+                })
+                ->with(['user', 'jadwalTryout.paketTryout'])
+            )
             ->columns([
-                TextColumn::make('user.username')
-                    ->label('Username')
-                    ->searchable(),
-                TextColumn::make('user.name')
-                    ->label('Nama Peserta')
-                    ->searchable(),
                 TextColumn::make('status')
                     ->label('Status')
                     ->badge()
+                    ->formatStateUsing(fn (string $state): string => match ($state) {
+                        'registered' => 'Non Active',
+                        'active' => 'Active',
+                        'working' => 'Working',
+                        'completed' => 'Completed',
+                        default => $state,
+                    })
                     ->color(fn (string $state): string => match ($state) {
-                        'registered' => 'gray',
+                        'registered' => 'danger',
                         'active' => 'info',
                         'started', 'working' => 'warning',
                         'completed' => 'success',
                         default => 'danger',
                     }),
+                TextColumn::make('jadwalTryout.paketTryout.kode')
+                    ->label('Kode Test')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('user.username')
+                    ->label('Username')
+                    ->searchable()
+                    ->sortable(),
+                TextColumn::make('user.name')
+                    ->label('Nama Peserta')
+                    ->searchable()
+                    ->sortable(),
                 TextColumn::make('jadwalTryout.nama_sesi')
-                    ->label('Kode Tes'),
+                    ->label('Kelompok')
+                    ->sortable(),
             ])
             ->filters([
                 SelectFilter::make('status')
+                    ->label('Status')
                     ->options([
                         'registered' => 'Non Active',
                         'active' => 'Active',
-                        'working' => 'Working',
-                        'completed' => 'Completed',
-                    ]),
-                SelectFilter::make('jadwal_tryout_id')
+                    ])
+                    ->default('active'),
+
+                SelectFilter::make('paket_tryout_id')
                     ->label('Kode Tes')
-                    ->options(fn () => JadwalTryout::where('is_active', true)->pluck('nama_sesi', 'id')->toArray()),
-            ])
+                    ->options(fn () => JadwalTryout::where('is_active', true)
+                        ->where('tgl_mulai', '<=', now()->endOfDay())
+                        ->where('tgl_selesai', '>=', now()->startOfDay())
+                        ->with('paketTryout')
+                        ->get()
+                        ->mapWithKeys(fn ($j) => [$j->paketTryout->id ?? 0 => $j->paketTryout->kode ?? '-'])
+                        ->toArray())
+                    ->query(function ($query, $state) {
+                        if ($state['value']) {
+                            $query->whereHas('jadwalTryout', function ($q) use ($state) {
+                                $q->where('paket_tryout_id', $state['value']);
+                            });
+                        }
+                    }),
+
+                SelectFilter::make('nama_sesi')
+                    ->label('Kelompok')
+                    ->options(fn () => JadwalTryout::where('is_active', true)
+                        ->where('tgl_mulai', '<=', now()->endOfDay())
+                        ->where('tgl_selesai', '>=', now()->startOfDay())
+                        ->pluck('nama_sesi', 'nama_sesi')
+                        ->toArray())
+                    ->query(function ($query, $state) {
+                        if ($state['value']) {
+                            $query->whereHas('jadwalTryout', function ($q) use ($state) {
+                                $q->where('nama_sesi', $state['value']);
+                            });
+                        }
+                    }),
+
+                SelectFilter::make('kelas_id')
+                    ->label('Kelas')
+                    ->relationship('user.kelas', 'nama_kelas'),
+
+            ], layout: \Filament\Tables\Enums\FiltersLayout::AboveContent)
+            ->filtersFormColumns(4)
             ->headerActions([
                 Action::make('reset_all')
                     ->label('Reset All')

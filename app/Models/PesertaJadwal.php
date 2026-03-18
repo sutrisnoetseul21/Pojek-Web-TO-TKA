@@ -21,6 +21,7 @@ class PesertaJadwal extends Model
         'waktu_selesai',
         'sisa_waktu',
         'total_nilai',
+        'request_reset_at',
     ];
 
     protected $casts = [

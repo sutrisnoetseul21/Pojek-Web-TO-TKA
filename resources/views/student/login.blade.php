@@ -9,9 +9,25 @@
             <h2 class="login-title">Selamat Datang</h2>
             <p class="login-subtitle">Silakan login dengan menggunakan username dan password yang anda miliki</p>
 
+            @if (session('success_request'))
+                <div class="error-box" style="background: #ecfdf5; border-left-color: #10b981; color: #065f46;">
+                    <span>{{ session('success_request') }}</span>
+                </div>
+            @endif
+
             @if ($errors->any())
                 <div class="error-box">
                     <span class="text-red-700">{{ $errors->first() }}</span>
+                    
+                    @if (session('can_request_reset'))
+                        <form action="{{ route('tryout.requestReset') }}" method="POST" style="margin-top: 0.75rem;">
+                            @csrf
+                            <input type="hidden" name="peserta_jadwal_id" value="{{ session('peserta_jadwal_id') }}">
+                            <button type="submit" class="btn-request-reset" style="width: 100%; padding: 0.6rem; background: #fff; border: 1px solid #ef4444; color: #ef4444; border-radius: 0.375rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s;">
+                                🔔 Ajukan Request Reset ke Pengawas
+                            </button>
+                        </form>
+                    @endif
                 </div>
             @endif
 

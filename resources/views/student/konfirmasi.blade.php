@@ -63,12 +63,24 @@
                 @endforeach
             </div>
 
-            <form action="{{ route('tryout.mulai', $jadwal) }}" method="POST">
-                @csrf
-                <button type="submit" class="btn-mulai">
-                    🚀 Mulai Tryout
-                </button>
-            </form>
+            @if(session('errors') && session('errors')->has('error'))
+                <div class="alert alert-danger" style="margin-bottom: 1rem; padding: 0.75rem; background: #fee2e2; border: 1px solid #fecaca; border-radius: 0.5rem; color: #b91c1c; font-size: 0.875rem; text-align: center;">
+                    {{ session('errors')->first('error') }}
+                </div>
+            @endif
+
+            @if($isLocked)
+                <div class="alert alert-warning" style="margin-bottom: 1rem; padding: 0.75rem; background: #fef08a; border: 1px solid #fdf08a; border-radius: 0.5rem; color: #854d0e; font-size: 0.875rem; text-align: center;">
+                    ⚠️ Status ujian Anda belum diaktifkan oleh pengawas (Proktor). Silakan tunggu arahan pengawas untuk memulai.
+                </div>
+            @else
+                <form action="{{ route('tryout.mulai', $jadwal) }}" method="POST">
+                    @csrf
+                    <button type="submit" class="btn-mulai">
+                        🚀 Mulai Tryout
+                    </button>
+                </form>
+            @endif
         </div>
     </div>
 
