@@ -805,20 +805,20 @@
 
                 <!-- Navigation Divider & Buttons (Image 2 style with text) -->
                 <div class="options-nav" style="margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem;">
-                    <button class="nav-btn nav-btn-prev" id="btnPrev" onclick="prevSoal()" style="padding: 0.625rem 1rem; display: flex; align-items: center; gap: 0.4rem; border-radius: 0.5rem;">
-                        ‹ <span class="hidden md:inline">Soal sebelumnya</span><span class="md:hidden">Sblm</span>
+                    <button class="nav-btn nav-btn-prev" id="btnPrev" onclick="prevSoal()" style="padding: 0.625rem 1rem; display: flex; align-items: center; gap: 0.4rem; border-radius: 0.5rem; white-space: nowrap;">
+                        ‹ <span>Soal sebelumnya</span>
                     </button>
 
                     <div style="flex: 1; display: flex; justify-content: center;">
-                        <button class="nav-btn nav-btn-ragu" id="btnRagu" onclick="toggleRagu()" style="padding: 0.625rem 1rem; display: flex; align-items: center; gap: 0.5rem; border-radius: 0.5rem;">
-                            <span class="hidden md:inline">Ragu-ragu</span><span class="md:hidden">Ragu</span>
+                        <button class="nav-btn nav-btn-ragu" id="btnRagu" onclick="toggleRagu()" style="padding: 0.625rem 1rem; display: flex; align-items: center; gap: 0.5rem; border-radius: 0.5rem; white-space: nowrap;">
+                            <span>Ragu-ragu</span>
                             <input type="checkbox" id="raguCheck" style="width: 15px; height: 15px; pointer-events: none; accent-color: white;">
                         </button>
                     </div>
 
                     <div style="display: flex; gap: 0.5rem;">
-                        <button class="nav-btn nav-btn-next" id="btnNext" onclick="nextSoal()" style="padding: 0.625rem 1rem; display: flex; align-items: center; gap: 0.4rem; border-radius: 0.5rem;">
-                            <span class="hidden md:inline">Soal berikutnya</span><span class="md:hidden">Lanjt</span> ›
+                        <button class="nav-btn nav-btn-next" id="btnNext" onclick="nextSoal()" style="padding: 0.625rem 1rem; display: flex; align-items: center; gap: 0.4rem; border-radius: 0.5rem; white-space: nowrap;">
+                            <span>Soal berikutnya</span> ›
                         </button>
 
                         <button class="nav-btn nav-btn-lanjut-mapel" id="btnLanjutMapel" onclick="lanjutMapel()" style="display:none; padding: 0.625rem 1.25rem; border-radius: 0.5rem;">
