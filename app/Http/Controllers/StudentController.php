@@ -120,9 +120,8 @@ class StudentController extends Controller
             ->where('status', 'started')
             ->first();
 
-        if ($activeSession) {
-            return redirect()->route('tryout.soal', $activeSession);
-        }
+        // Kita sengaja tidak melompati (skip) halaman ini agar peserta
+        // selalu diwajibkan menginput token kembali demi keamanan setelah login.
 
         return view('student.biodata', [
             'user' => $user,
