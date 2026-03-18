@@ -23,7 +23,7 @@ class KelompokTes extends Page implements HasTable
     protected static ?string $navigationIcon = 'heroicon-o-users';
     protected static ?string $navigationLabel = 'Kelompok Tes';
     protected static ?string $title = 'Kelompok Tes';
-    protected static ?string $navigationGroup = 'Monitoring Ujian (Baru)';
+    protected static ?string $navigationGroup = 'Monitoring Ujian';
     protected static ?int $navigationSort = 6;
 
     protected static string $view = 'filament.pages.kelompok-tes';

@@ -20,7 +20,7 @@ class StatusTes extends Page implements HasTable
     protected static ?string $navigationIcon = 'heroicon-o-check-circle';
     protected static ?string $navigationLabel = 'Status Tes';
     protected static ?string $title = 'Status Tes';
-    protected static ?string $navigationGroup = 'Monitoring Ujian (Baru)';
+    protected static ?string $navigationGroup = 'Monitoring Ujian';
     protected static ?int $navigationSort = 3;
 
     protected static string $view = 'filament.pages.status-tes';

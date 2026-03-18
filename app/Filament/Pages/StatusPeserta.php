@@ -23,7 +23,7 @@ class StatusPeserta extends Page implements HasTable, HasForms
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
     protected static ?string $navigationLabel = 'Status Peserta';
     protected static ?string $title = 'Status Peserta';
-    protected static ?string $navigationGroup = 'Monitoring Ujian (Baru)';
+    protected static ?string $navigationGroup = 'Monitoring Ujian';
     protected static ?int $navigationSort = 1;
 
     protected static string $view = 'filament.pages.status-peserta';

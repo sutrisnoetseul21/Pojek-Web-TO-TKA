@@ -22,7 +22,7 @@ class DaftarPeserta extends Page implements HasTable, HasForms
     protected static ?string $navigationIcon = 'heroicon-o-user';
     protected static ?string $navigationLabel = 'Daftar Peserta';
     protected static ?string $title = 'Daftar Peserta';
-    protected static ?string $navigationGroup = 'Monitoring Ujian (Baru)';
+    protected static ?string $navigationGroup = 'Monitoring Ujian';
     protected static ?int $navigationSort = 2;
     protected static string $view = 'filament.pages.daftar-peserta';
 

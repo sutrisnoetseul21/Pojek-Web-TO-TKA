@@ -21,7 +21,7 @@ class RequestReset extends Page implements HasTable
     protected static ?string $navigationIcon = 'heroicon-o-arrow-path-rounded-square';
     protected static ?string $navigationLabel = 'Request Reset Login';
     protected static ?string $title = 'Request Reset Login';
-    protected static ?string $navigationGroup = 'Monitoring Ujian (Baru)';
+    protected static ?string $navigationGroup = 'Monitoring Ujian';
     protected static ?int $navigationSort = 4;
     protected static string $view = 'filament.pages.request-reset';
 
