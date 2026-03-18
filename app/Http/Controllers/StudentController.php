@@ -388,6 +388,33 @@ class StudentController extends Controller
     }
 
     /**
+     * Sinkronisasi Waktu Ujian (Heartbeat via AJAX)
+     */
+    public function syncWaktu(\Illuminate\Http\Request $request)
+    {
+        $request->validate([
+            'peserta_jadwal_id' => 'required|exists:peserta_jadwal,id',
+            'sisa_waktu' => 'required|numeric',
+        ]);
+
+        $pesertaJadwal = PesertaJadwal::findOrFail($request->peserta_jadwal_id);
+
+        if ($pesertaJadwal->user_id !== \Illuminate\Support\Facades\Auth::id()) {
+            return response()->json(['error' => 'Unauthorized'], 403);
+        }
+
+        if ($pesertaJadwal->status === 'completed') {
+            return response()->json(['status' => 'force_reload']);
+        }
+
+        $pesertaJadwal->update([
+            'sisa_waktu' => $request->sisa_waktu
+        ]);
+
+        return response()->json(['success' => true]);
+    }
+
+    /**
      * Toggle ragu-ragu
      */
     public function toggleRagu(JawabanPeserta $jawaban)

@@ -932,10 +932,15 @@
             for (const [k, v] of Object.entries(jawabanMap)) answers[k] = v;
             for (const [k, v] of Object.entries(raguMap)) raguStatus[k] = v;
 
-            // Load state from localStorage
+            const dbMapelId = {{ $pesertaJadwal->current_mapel_id ?? 'null' }};
             const storedIndex = localStorage.getItem('currentMapelIndex_' + pesertaJadwalId);
             if (storedIndex !== null) {
                 currentMapelIndex = parseInt(storedIndex);
+            } else if (dbMapelId !== null) {
+                const idx = mapelSections.findIndex(m => m.mapel_id === dbMapelId);
+                if (idx > -1) {
+                    currentMapelIndex = idx;
+                }
             }
 
             const storedTimers = localStorage.getItem('mapelTimers_' + pesertaJadwalId);
@@ -1173,7 +1178,7 @@
                 answers[soalId] = value;
             }
 
-            fetch('{{ route('tryout.simpan_jawaban') }}', {
+            fetch('{{ route('tryout.jawab') }}', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -1182,7 +1187,7 @@
                 body: JSON.stringify({
                     peserta_jadwal_id: pesertaJadwalId,
                     bank_soal_id: soalId,
-                    jawaban: value,
+                    jawaban: answers[soalId],
                     mapel_id: mapelSections[currentMapelIndex].mapel_id,
                     sisa_waktu: mapelTimers[currentMapelIndex] // Sinkronisasi timer per mapel
                 })
@@ -1361,6 +1366,21 @@
             if (event.target === event.currentTarget) toggleDaftarSoal();
         }
 
+        // Heartbeat timer sync to server every 20 seconds
+        setInterval(() => {
+            fetch('{{ route('tryout.syncWaktu') }}', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                },
+                body: JSON.stringify({
+                    peserta_jadwal_id: pesertaJadwalId,
+                    sisa_waktu: mapelTimers[currentMapelIndex]
+                })
+            });
+        }, 20000);
+        
         // Font size
         let fontSize = 16;
         function changeFontSize(delta) {

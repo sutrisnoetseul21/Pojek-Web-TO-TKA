@@ -42,7 +42,7 @@ class DaftarLogin extends Page implements HasTable
                         ->whereNotNull('user_id');
                 })
             )
-            ->poll('5s')
+            ->poll('20s')
             ->columns([
                 TextColumn::make('user.username')
                     ->label('Username/No Peserta')
@@ -60,8 +60,8 @@ class DaftarLogin extends Page implements HasTable
                 TextColumn::make('sisa_waktu')
                     ->label('Sisa Waktu')
                     ->badge()
-                    ->formatStateUsing(fn ($state) => $state ? "{$state}m" : '-')
-                    ->color(fn ($record) => ($record->sisa_waktu ?? 0) < 5 ? 'danger' : 'success'),
+                    ->formatStateUsing(fn ($state) => $state ? ceil($state / 60) . 'm' : '-')
+                    ->color(fn ($record) => ($record->sisa_waktu ?? 0) < 300 ? 'danger' : 'success'),
             ])
             ->actions([
                 Action::make('reset')

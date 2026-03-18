@@ -127,7 +127,7 @@ class StatusPeserta extends Page implements HasTable, HasForms
                     ->sortable(),
                 TextColumn::make('sisa_waktu')
                     ->label('Sisa Waktu')
-                    ->formatStateUsing(fn ($state) => $state ? gmdate("H:i:s", $state) : '-')
+                    ->formatStateUsing(fn ($state) => $state ? ceil($state / 60) . 'm' : '-')
                     ->sortable(),
             ])
             ->actions([
@@ -151,6 +151,7 @@ class StatusPeserta extends Page implements HasTable, HasForms
                             ->send();
                     })
             ])
-            ->emptyStateHeading('Tidak ada data peserta untuk status ini.');
+            ->emptyStateHeading('Tidak ada data peserta untuk status ini.')
+            ->poll('20s');
     }
 }

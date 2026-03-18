@@ -30,6 +30,7 @@ Route::prefix('tryout')->name('tryout.')->group(function () {
 
         Route::get('/soal/{pesertaJadwal}', [StudentController::class, 'soal'])->name('soal');
         Route::post('/jawab', [StudentController::class, 'simpanJawaban'])->name('jawab');
+        Route::post('/sync-waktu', [StudentController::class, 'syncWaktu'])->name('syncWaktu');
         Route::post('/ragu/{jawaban}', [StudentController::class, 'toggleRagu'])->name('ragu');
 
         Route::get('/selesai/{pesertaJadwal}', [StudentController::class, 'showSelesai'])->name('selesai');
