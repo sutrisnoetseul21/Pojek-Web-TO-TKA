@@ -288,22 +288,25 @@
         }
 
         .nav-btn-prev {
-            background: var(--success);
+            background: #ef4444; /* Red like image 2 */
             color: white;
         }
 
         .nav-btn-next {
-            background: var(--primary);
+            background: #0ea5e9; /* Sky blue like image 2 */
             color: white;
         }
 
         .nav-btn-ragu {
-            background: var(--accent);
+            background: #f59e0b; /* Amber/Yellow like image 2 */
             color: white;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .nav-btn-ragu.active {
-            background: #d97706;
+            background: #f59e0b; /* Stay amber */
         }
 
         .nav-btn-selesai {
@@ -799,34 +802,42 @@
                 <div class="soal-instruction" id="soalInstruction"></div>
                 <div class="soal-content" id="soalContent"></div>
                 <div class="options" id="optionsContainer"></div>
+
+                <!-- Navigation Divider & Buttons (Image 2 style) -->
+                <div class="options-nav" style="margin-top: 2rem; padding-top: 1.25rem; border-top: 1px solid #e5e7eb; display: flex; justify-content: space-between; align-items: center; gap: 0.75rem;">
+                    <button class="nav-btn nav-btn-prev" id="btnPrev" onclick="prevSoal()">
+                        ‹ <span class="hidden md:inline">Soal sebelumnya</span><span class="md:hidden">Sblm</span>
+                    </button>
+
+                    <div style="flex: 1; display: flex; justify-content: center;">
+                        <button class="nav-btn nav-btn-ragu" id="btnRagu" onclick="toggleRagu()">
+                            <span class="hidden md:inline">Ragu-ragu</span><span class="md:hidden">Ragu</span>
+                            <input type="checkbox" id="raguCheck" style="width: 15px; height: 15px; pointer-events: none; margin-left: 0.5rem; accent-color: white;">
+                        </button>
+                    </div>
+
+                    <div>
+                        <button class="nav-btn nav-btn-next" id="btnNext" onclick="nextSoal()">
+                            <span class="hidden md:inline">Soal berikutnya</span><span class="md:hidden">Lanjt</span> ›
+                        </button>
+
+                        <button class="nav-btn nav-btn-lanjut-mapel" id="btnLanjutMapel" onclick="lanjutMapel()" style="display:none;">
+                            Lanjt Mapel ▸
+                        </button>
+
+                        <a class="nav-btn nav-btn-selesai" id="btnSelesai" href="{{ route('tryout.selesai', $pesertaJadwal) }}"
+                            onclick="localStorage.removeItem('currentMapelIndex_' + pesertaJadwalId); localStorage.removeItem('mapelTimers_' + pesertaJadwalId);"
+                            style="display:none; text-decoration:none;">
+                            ✅ Selesai
+                        </a>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- Footer -->
-    <footer class="footer">
-        <button class="nav-btn nav-btn-prev" id="btnPrev" onclick="prevSoal()">
-            ‹ <span class="hidden md:inline">Soal sebelumnya</span><span class="md:hidden">Sblm</span>
-        </button>
-
-        <button class="nav-btn nav-btn-ragu" id="btnRagu" onclick="toggleRagu()">
-            🚩 <span class="hidden md:inline">Ragu-ragu</span><span class="md:hidden">Ragu</span>
-        </button>
-
-        <button class="nav-btn nav-btn-next" id="btnNext" onclick="nextSoal()">
-            <span class="hidden md:inline">Soal berikutnya</span><span class="md:hidden">Lanjt</span> ›
-        </button>
-
-        <button class="nav-btn nav-btn-lanjut-mapel" id="btnLanjutMapel" onclick="lanjutMapel()" style="display:none;">
-            Lanjt Mapel ▸
-        </button>
-
-        <a class="nav-btn nav-btn-selesai" id="btnSelesai" href="{{ route('tryout.selesai', $pesertaJadwal) }}"
-            onclick="localStorage.removeItem('currentMapelIndex_' + pesertaJadwalId); localStorage.removeItem('mapelTimers_' + pesertaJadwalId);"
-            style="display:none; text-decoration:none;">
-            ✅ Selesai
-        </a>
-    </footer>
+    <!-- Empty Footer to satisfy flex container structure if any -->
+    <footer style="display:none;"></footer>
 
     <!-- Modal Daftar Soal -->
     <div class="modal-overlay" id="modalDaftarSoal" onclick="closeDaftarSoal(event)">
@@ -1101,6 +1112,8 @@
             // Ragu button
             const btnRagu = document.getElementById('btnRagu');
             btnRagu.classList.toggle('active', !!raguStatus[soal.id]);
+            const raguCheck = document.getElementById('raguCheck');
+            if (raguCheck) raguCheck.checked = !!raguStatus[soal.id];
 
             // Navigation buttons
             const isFirstSoal = currentSoalIndex === 0;
