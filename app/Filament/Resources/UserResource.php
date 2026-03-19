@@ -23,7 +23,7 @@ class UserResource extends Resource
     protected static ?string $navigationLabel = 'User Peserta';
     protected static ?string $modelLabel = 'User';
     protected static ?string $pluralModelLabel = 'Users';
-    protected static ?string $navigationGroup = 'Manajemen Peserta';
+    protected static ?string $navigationGroup = 'Manajemen Peserta dan Ruangan';
     protected static ?int $navigationSort = 3;
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
@@ -143,6 +143,7 @@ class UserResource extends Resource
                 Tables\Columns\BadgeColumn::make('role')
                     ->colors([
                         'danger' => 'admin',
+                        'warning' => 'proktor',
                         'info' => 'peserta',
                     ]),
                 Tables\Columns\TextColumn::make('nama_lengkap')

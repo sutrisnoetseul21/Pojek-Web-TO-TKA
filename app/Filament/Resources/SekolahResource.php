@@ -20,7 +20,7 @@ class SekolahResource extends Resource
     protected static ?string $navigationLabel = 'Sekolah';
     protected static ?string $modelLabel = 'Sekolah';
     protected static ?string $pluralModelLabel = 'Sekolah';
-    protected static ?string $navigationGroup = 'Manajemen Peserta';
+    protected static ?string $navigationGroup = 'Manajemen Peserta dan Ruangan';
     protected static ?int $navigationSort = 1;
 
     protected static ?string $navigationIcon = 'heroicon-o-building-library';

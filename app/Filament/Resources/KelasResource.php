@@ -20,7 +20,7 @@ class KelasResource extends Resource
     protected static ?string $navigationLabel = 'Kelas';
     protected static ?string $modelLabel = 'Kelas';
     protected static ?string $pluralModelLabel = 'Kelas';
-    protected static ?string $navigationGroup = 'Manajemen Peserta';
+    protected static ?string $navigationGroup = 'Manajemen Peserta dan Ruangan';
     protected static ?int $navigationSort = 2;
 
     protected static ?string $navigationIcon = 'heroicon-o-academic-cap';

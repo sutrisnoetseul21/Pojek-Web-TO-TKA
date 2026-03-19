@@ -19,10 +19,10 @@ class KartuPesertaResource extends Resource
 {
     protected static ?string $model = User::class;
 
-    protected static ?string $navigationLabel = 'Kartu Peserta';
+    protected static ?string $navigationLabel = 'Kartu Login';
     protected static ?string $modelLabel = 'Kartu Peserta';
     protected static ?string $pluralModelLabel = 'Kartu Peserta';
-    protected static ?string $navigationGroup = 'Manajemen Peserta';
+    protected static ?string $navigationGroup = 'Administrasi Tes';
     protected static ?int $navigationSort = 4;
 
     protected static ?string $navigationIcon = 'heroicon-o-identification';
