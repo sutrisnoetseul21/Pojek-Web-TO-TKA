@@ -1,35 +1,30 @@
-# Analisis & Implementation Plan - Integrasi Editor Matematika (MathLive) di Bank Soal
+# Analisis & Implementation Plan - Integrasi Editor Matematika (Strategi Hibrida)
 
-## 1. Analisis Masalah Saat Ini
-Form pembuatan Bank Soal saat ini menggunakan `RichEditor` bawaan Filament v3 (yang berbasiskan Trix). Trix sangat terbatas kemampuannya dan secara bawaan tidak mendungkung penulisan persamaan matematika (math equations / rumus) maupun ekstensi plugin eksternal dengan mudah. Akibatnya, pembuat soal tidak bisa menuliskan rumus matematika kompleks secara langsung.
+Berikut adalah rencana eksekusi teknis untuk aplikasi Laravel Filament, dirancang agar guru mudah membuat soal dan siswa nyaman membacanya menggunakan kombinasi Tiptap dan perenderan Math.
 
-## 2. Alternatif Solusi
+## Fase 1: Perombakan Editor Inti (Sisi Admin)
+**Fokus:** Membuang Trix yang kaku dan menggantinya dengan editor modern.
+1.  **Langkah 1:** Uninstall atau nonaktifkan penggunaan `RichEditor` bawaan Filament.
+2.  **Langkah 2:** Install package pihak ketiga `awcodes/filament-tiptap-editor` via Composer.
+3.  **Langkah 3:** Implementasikan Tiptap Editor pada `BankSoalResource` (di field Soal dan Pembahasan) serta `BankStimulusResource`. Pastikan toolbar standar (Bold, Italic, Image, Table) berfungsi normal.
 
-### Opsi A: Menggunakan Filament Tiptap Editor + Ekstensi KaTeX
-Filament memiliki plugin populer bernama `awcodes/filament-tiptap-editor` yang menggantikan Trix dengan Tiptap. Tiptap mendukung ekstensi matematika berbasis KaTeX/LaTeX.
-- **Kelebihan:** Terintegrasi rapi dengan ekosistem teks editor biasa.
-- **Kekurangan:** Penulis soal harus bisa menulis syntax LaTeX secara manual. Tidak ramah pengguna untuk guru yang tidak terbiasa dengan coding (tidak ada keyboard visual).
+## Fase 2: Menangani Input Matematika (Sisi Guru)
+**Fokus:** Memberikan jalan bagi guru untuk memasukkan persamaan matematika ke dalam editor Tiptap.
+1.  **Langkah 1 (Standar):** Ajarkan/sepakati format penulisan LaTeX dasar. Misalnya, rumus harus diapit oleh tanda `$$` atau `\(`. Guru bisa menggunakan alat gratis luar (seperti codecogs atau mathlive.io) untuk men-generate teks LaTeX, lalu mem-paste teks tersebut ke Tiptap.
+2.  **Langkah 2 (Advanced - Opsi MathLive):** Buat sebuah Custom Action (tombol) di toolbar Tiptap Filament atau sebuah Action di bawah field editor bernama "Insert Math". Saat diklik, muncul modal Filament berisi Virtual Keyboard MathLive. Setelah rumus selesai dibuat, script akan menyisipkan kode LaTeX murninya ke dalam teks Tiptap.
 
-### Opsi B: Membuat Komponen Kustom menggunakan MathLive (Rekomendasi)
-Seperti yang Anda dengar, **MathLive** adalah open-source library yang menyediakan keyboard virtual langsung di layar (mirip keyboard smartphone, tapi khusus rumus matematika). 
-- **Kelebihan:** Sangat interaktif. Guru bisa menekan tombol integral, pecahan, akar kuadrat, dll, dan MathLive akan mengubahnya menjadi syntax LaTeX di belakang layar.
-- **Kekurangan:** Memerlukan pembuatan komponen Form Filament custom (membuat file View tipe blade dan Class Component yang meload *mathlive.js*).
+## Fase 3: Mesin Rendering (Sisi Siswa & Preview Admin)
+**Fokus:** Mengubah teks database menjadi tampilan matematika yang cantik di layar.
+1.  **Langkah 1:** Pilih **KaTeX** karena rendering-nya jauh lebih cepat di browser (sangat penting untuk aplikasi CBT agar loading ujian tidak berat).
+2.  **Langkah 2:** Pasang file CSS dan JS KaTeX di file layout frontend utama Anda (halaman tempat siswa mengerjakan tryout).
+3.  **Langkah 3:** Tambahkan script inisialisasi KaTeX agar otomatis memindai elemen HTML yang mengandung soal ujian dan merender semua teks yang berada di dalam tag khusus (misal `$$...$$`).
+4.  **Langkah 4:** Pastikan rendering KaTeX ini juga dipasang di halaman "View" Filament agar admin bisa melakukan preview soal dengan benar.
 
-## 3. Implementation Plan (Fokus pada Opsi B: MathLive)
+## Fase 4: Standarisasi Database & Keamanan
+**Fokus:** Memastikan integritas data.
+1.  **Langkah 1:** Pastikan tipe kolom di database (MySQL/PostgreSQL) untuk Soal, Opsi Jawaban, dan Pembahasan adalah `TEXT` atau `LONGTEXT`.
+2.  **Langkah 2:** Lakukan testing sanitasi. Pastikan Filament tidak melakukan stripping atau membuang karakter backslash (`\`) yang merupakan nyawa dari sintaks LaTeX saat proses simpan ke database.
 
-### Fase 1: Pembuatan Custom Form Component `MathEditor`
-1.  Membuat class component `App\Filament\Forms\Components\MathEditor` yang extends `Field`.
-2.  Membuat view blade `resources/views/filament/forms/components/math-editor.blade.php`.
-3.  Inject library MathLive secara asinkron atau melalu CDN ke dalam view tersebut menggunakan instruksi AlpineJS x-data. Mengaktifkan tag `<math-field>` yang disediakan MathLive.
-
-### Fase 2: Implementasi pada Resource
-#### [MODIFY] `BankSoalResource.php`
--   Ubah input soal yang sebelumnya hanya bergantung pada `RichEditor` biasa menjadi opsi gabungan, atau integrasi spesifik dimana teks diformat dan rumus di-trigger. Jika menggunakan murni `MathEditor`, kita tambahkan input khusus untuk mengetik rumus lalu mem-parsingnya saat ditampilkan.
--   *Catatan Opsional:* Kita juga bisa mencari package Filament third-party spesifik yang menggabungkan Tiptap dengan GUI MathLive jika tersedia, untuk menghindari pembuatan custom view manual (contoh, mencoba mencari package TinyMCE Filament yang sudah pre-load plugin math).
-
-### Fase 3: Pengujian Display (Front-end & Tabel)
-Bagian yang tak kalah penting adalah saat merender *Bank Soal* di layar frontend peserta ujian atau tabel Admin. Browser perlu merender LaTeX menjadi visual menggunakan library MathJax atau KaTeX yang dipanggil di global layout.
-
-## User Review Required
+---
 > [!IMPORTANT]
-> **Keputusan Integrasi UI:** Apakah Anda ingin input Matematika ini dibuat sebagai "kolom terpisah" di form (misal: "Teks Soal" dan "Rumus Soal"), **ATAU** Anda ingin kemampuan di mana di tengah kalimat teks deskripsi terdapat tombol khusus untuk menyuntikkan rumus matematika (Rich Text Editor terintegrasi)? Menggunakan opsi RichEditor Tiptap + Math biasanya lebih disukai secara format, tapi membuat custom keyboard sedikit lebih menantang dibandingkan field MathLive standalone.
+> **Keputusan Integrasi UI:** Rencana ini mengadopsi pendekatan Hibrida. Input menggunakan Tiptap Editor untuk fleksibilitas (dengan opsi menyuntikkan LaTeX via Modal Custom Action), dan output dirender secara dinamis di klien menggunakan KaTeX demi performa. Keutuhan karakter backslash `\` saat transmisi data menjadi titik pengujian paling krusial di Fase 4.
