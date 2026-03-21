@@ -49,257 +49,300 @@ class BankSoalResource extends Resource
     {
         return $form
             ->schema([
-                // BAGIAN 1: PENGATURAN SOAL
-                Forms\Components\Section::make('Identitas & Pengaturan')
-                    ->schema([
-                        // Baris 1: Mata Pelajaran & Paket (harus dipilih dulu)
-                        Forms\Components\Grid::make(2)
-                            ->schema([
-                                Forms\Components\Select::make('mapel_id')
-                                    ->options(function () {
-                                        $user = auth()->user();
-                                        $query = \App\Models\RefMapel::query();
-
-                                        if ($user->isAdmin() && $user->jenjang) {
-                                            $query->where('jenjang', $user->jenjang);
-                                        }
-
-                                        return $query->get()->mapWithKeys(fn($m) => [$m->id => "{$m->nama_mapel} - {$m->jenjang}"]);
-                                    })
-                                    ->searchable()
-                                    ->preload()
-                                    ->required()
-                                    ->live()
-                                    ->afterStateUpdated(function (Forms\Set $set) {
-                                        $set('paket_id', null);
-                                        $set('stimulus_id', null);
-                                    })
-                                    ->rules([
-                                        fn() => function (string $attribute, $value, $fail) {
+                Forms\Components\Wizard::make([
+                    // STEP 1: IDENTITAS & PENGATURAN
+                    Forms\Components\Wizard\Step::make('Identitas & Pengaturan')
+                        ->icon('heroicon-o-adjustments-horizontal')
+                        ->schema([
+                            // Baris 1: Mata Pelajaran & Paket
+                            Forms\Components\Grid::make(2)
+                                ->schema([
+                                    Forms\Components\Select::make('mapel_id')
+                                        ->options(function () {
                                             $user = auth()->user();
+                                            $query = \App\Models\RefMapel::query();
+
                                             if ($user->isAdmin() && $user->jenjang) {
-                                                $mapel = \App\Models\RefMapel::find($value);
-                                                if ($mapel && $mapel->jenjang !== $user->jenjang) {
-                                                    $fail("Mata Pelajaran ini dari Jenjang {$mapel->jenjang}, sedangkan akun Anda dialokasikan untuk Jenjang {$user->jenjang}. Tidak boleh menyimpan.");
+                                                $query->where('jenjang', $user->jenjang);
+                                            }
+
+                                            return $query->get()->mapWithKeys(fn($m) => [$m->id => "{$m->nama_mapel} - {$m->jenjang}"]);
+                                        })
+                                        ->searchable()
+                                        ->preload()
+                                        ->required()
+                                        ->live()
+                                        ->afterStateUpdated(function (Forms\Set $set) {
+                                            $set('paket_id', null);
+                                            $set('stimulus_id', null);
+                                        })
+                                        ->rules([
+                                            fn() => function (string $attribute, $value, $fail) {
+                                                $user = auth()->user();
+                                                if ($user->isAdmin() && $user->jenjang) {
+                                                    $mapel = \App\Models\RefMapel::find($value);
+                                                    if ($mapel && $mapel->jenjang !== $user->jenjang) {
+                                                        $fail("Mata Pelajaran ini dari Jenjang {$mapel->jenjang}, sedangkan akun Anda dialokasikan untuk Jenjang {$user->jenjang}. Tidak boleh menyimpan.");
+                                                    }
                                                 }
                                             }
-                                        }
-                                    ])
-                                    ->label('Mata Pelajaran'),
-                                Forms\Components\Select::make('paket_id')
-                                    ->relationship('paket', 'nama_paket', modifyQueryUsing: fn(Builder $query, Forms\Get $get) => $query->where('mapel_id', $get('mapel_id')))
-                                    ->searchable()
-                                    ->preload()
-                                    ->required()
-                                    ->live()
-                                    ->disabled(fn(Forms\Get $get) => !$get('mapel_id'))
-                                    ->afterStateUpdated(fn(Forms\Set $set) => $set('stimulus_id', null))
-                                    ->label('Paket Soal'),
-                            ]),
+                                        ])
+                                        ->label('Mata Pelajaran'),
+                                    Forms\Components\Select::make('paket_id')
+                                        ->relationship('paket', 'nama_paket', modifyQueryUsing: fn(Builder $query, Forms\Get $get) => $query->where('mapel_id', $get('mapel_id')))
+                                        ->searchable()
+                                        ->preload()
+                                        ->required()
+                                        ->live()
+                                        ->disabled(fn(Forms\Get $get) => !$get('mapel_id'))
+                                        ->afterStateUpdated(fn(Forms\Set $set) => $set('stimulus_id', null))
+                                        ->label('Paket Soal'),
+                                ]),
 
-                        // Baris 2: Tipe Soal, Stimulus, Bobot
-                        Forms\Components\Grid::make(12)
-                            ->schema([
-                                Forms\Components\Select::make('tipe_soal')
-                                    ->label('Tipe Soal')
-                                    ->options([
-                                        'PG_TUNGGAL' => 'Pilihan Ganda Tunggal',
-                                        'PG_KOMPLEKS' => 'Pilihan Ganda Kompleks',
-                                        'BENAR_SALAH' => 'Benar / Salah (Model Tabel)',
-                                        'MENJODOHKAN' => 'Menjodohkan',
-                                        'ISIAN' => 'Isian Singkat',
-                                    ])
-                                    ->required()
-                                    ->live()
-                                    ->disabled(fn(Forms\Get $get) => !$get('mapel_id'))
-                                    ->afterStateUpdated(fn(Forms\Set $set) => $set('jawaban', []))
-                                    ->helperText(fn(?string $state): string => match ($state) {
-                                        'PG_TUNGGAL' => 'Siswa memilih SATU jawaban benar (Radio Button).',
-                                        'PG_KOMPLEKS' => 'Siswa memilih LEBIH DARI SATU jawaban (Checkbox).',
-                                        'BENAR_SALAH' => 'Siswa menentukan Benar/Salah untuk setiap pernyataan.',
-                                        'MENJODOHKAN' => 'Siswa mencocokkan premis dengan pasangan yang tepat.',
-                                        'ISIAN' => 'Siswa mengisi jawaban singkat.',
-                                        default => 'Pilih tipe soal untuk melihat deskripsi.',
-                                    })
-                                    ->columnSpan(5),
+                            // Baris 2: Tipe Soal, Stimulus, Bobot
+                            Forms\Components\Grid::make(12)
+                                ->schema([
+                                    Forms\Components\Select::make('tipe_soal')
+                                        ->label('Tipe Soal')
+                                        ->options([
+                                            'PG_TUNGGAL' => 'Pilihan Ganda Tunggal',
+                                            'PG_KOMPLEKS' => 'Pilihan Ganda Kompleks',
+                                            'BENAR_SALAH' => 'Benar / Salah (Model Tabel)',
+                                            'MENJODOHKAN' => 'Menjodohkan',
+                                            'ISIAN' => 'Isian Singkat',
+                                        ])
+                                        ->required()
+                                        ->live()
+                                        ->disabled(fn(Forms\Get $get) => !$get('mapel_id'))
+                                        ->afterStateUpdated(fn(Forms\Set $set) => $set('jawaban', []))
+                                        ->helperText(fn(?string $state): string => match ($state) {
+                                            'PG_TUNGGAL' => 'Siswa memilih SATU jawaban benar (Radio Button).',
+                                            'PG_KOMPLEKS' => 'Siswa memilih LEBIH DARI SATU jawaban (Checkbox).',
+                                            'BENAR_SALAH' => 'Siswa menentukan Benar/Salah untuk setiap pernyataan.',
+                                            'MENJODOHKAN' => 'Siswa mencocokkan premis dengan pasangan yang tepat.',
+                                            'ISIAN' => 'Siswa mengisi jawaban singkat.',
+                                            default => 'Pilih tipe soal untuk melihat deskripsi.',
+                                        })
+                                        ->columnSpan(5),
 
-                                // Stimulus: filtered by mapel_id AND paket_id
-                                Forms\Components\Select::make('stimulus_id')
-                                    ->relationship(
-                                        'stimulus',
-                                        'judul',
-                                        modifyQueryUsing: fn(Builder $query, Forms\Get $get) => $query
-                                            ->where('mapel_id', $get('mapel_id'))
-                                            ->when($get('paket_id'), fn($q, $paketId) => $q->where('paket_id', $paketId))
-                                    )
-                                    ->searchable()
-                                    ->preload()
-                                    ->label('Stimulus (Induk Soal)')
-                                    ->placeholder('-- Soal Berdiri Sendiri --')
-                                    ->disabled(fn(Forms\Get $get) => !$get('mapel_id'))
-                                    ->columnSpan(5),
+                                    Forms\Components\Select::make('stimulus_id')
+                                        ->relationship(
+                                            'stimulus',
+                                            'judul',
+                                            modifyQueryUsing: fn(Builder $query, Forms\Get $get) => $query
+                                                ->where('mapel_id', $get('mapel_id'))
+                                                ->when($get('paket_id'), fn($q, $paketId) => $q->where('paket_id', $paketId))
+                                        )
+                                        ->searchable()
+                                        ->preload()
+                                        ->label('Stimulus (Induk Soal)')
+                                        ->placeholder('-- Soal Berdiri Sendiri --')
+                                        ->disabled(fn(Forms\Get $get) => !$get('mapel_id'))
+                                        ->columnSpan(5),
 
-                                // Bobot Global (2/12)
-                                Forms\Components\TextInput::make('bobot')
-                                    ->label('Bobot Nilai')
-                                    ->numeric()
-                                    ->default(1)
-                                    ->required()
-                                    ->disabled(fn(Forms\Get $get) => !$get('mapel_id'))
-                                    ->columnSpan(2),
-                            ]),
-                    ]),
-
-                // BAGIAN 2: KONTEN SOAL
-                Forms\Components\Section::make('Konten Pertanyaan')
-                    ->description('Gunakan toolbar untuk memasukkan gambar, rumus, atau format teks.')
-                    ->schema([
-                        \FilamentTiptapEditor\TiptapEditor::make('pertanyaan')
-                            ->profile('default')
-                            ->label('')
-                            ->required()
-                            ->disk('public')
-                            ->directory('soal-images')
-                            ->extraInputAttributes(['style' => 'min-height: 200px;'])
-                            ->columnSpanFull()
-                            ->hintAction(
-                                \Filament\Forms\Components\Actions\Action::make('insert_math')
-                                    ->label('Insert Math (MathLive)')
-                                    ->icon('heroicon-m-calculator')
-                                    ->form([
-                                        \Filament\Forms\Components\ViewField::make('latex_code')
-                                            ->view('filament.forms.components.mathlive-modal-input')
-                                            ->label('Persamaan Matematika')
-                                    ])
-                                    ->action(function (array $data, $state, \Filament\Forms\Set $set) {
-                                        $newLatex = $data['latex_code'] ?? '';
-                                        if ($newLatex) {
-                                            $set('pertanyaan', $state . ' $$' . $newLatex . '$$ ');
-                                        }
-                                    })
-                            ),
-                        \FilamentTiptapEditor\TiptapEditor::make('pembahasan')
-                            ->profile('default')
-                            ->label('Pembahasan (Opsional)')
-                            ->extraInputAttributes(['style' => 'min-height: 200px;'])
-                            ->columnSpanFull()
-                            ->hintAction(
-                                \Filament\Forms\Components\Actions\Action::make('insert_math_pembahasan')
-                                    ->label('Insert Math (MathLive)')
-                                    ->icon('heroicon-m-calculator')
-                                    ->form([
-                                        \Filament\Forms\Components\ViewField::make('latex_code')
-                                            ->view('filament.forms.components.mathlive-modal-input')
-                                            ->label('Persamaan Matematika')
-                                    ])
-                                    ->action(function (array $data, $state, \Filament\Forms\Set $set) {
-                                        $newLatex = $data['latex_code'] ?? '';
-                                        if ($newLatex) {
-                                            $set('pembahasan', $state . ' $$' . $newLatex . '$$ ');
-                                        }
-                                    })
-                            ),
-                        Forms\Components\Hidden::make('nomor_urut')
-                            ->default(0),
-                    ]),
-
-                // BAGIAN 3: JAWABAN (Repeater Grid 12)
-                Forms\Components\Section::make('Opsi Jawaban & Poin')
-                    ->description('Atur opsi jawaban beserta poin dan kunci jawaban yang benar. Drag untuk mengubah urutan.')
-                    ->schema([
-                        Forms\Components\Actions::make([
-                            Forms\Components\Actions\Action::make('atur_jumlah')
-                                ->label('Atur Jumlah Opsi')
-                                ->icon('heroicon-m-adjustments-horizontal')
-                                ->form([
-                                    Forms\Components\TextInput::make('jumlah')
-                                        ->label('Jumlah Opsi')
+                                    Forms\Components\TextInput::make('bobot')
+                                        ->label('Bobot Nilai')
                                         ->numeric()
-                                        ->default(4)
-                                        ->minValue(1)
-                                        ->maxValue(10)
-                                        ->required(),
-                                ])
-                                ->action(function (array $data, Forms\Get $get, Forms\Set $set) {
-                                    $currentItems = $get('jawaban') ?? [];
-                                    $newCount = (int) $data['jumlah'];
-                                    $currentCount = count($currentItems);
-
-                                    if ($newCount > $currentCount) {
-                                        for ($i = $currentCount; $i < $newCount; $i++) {
-                                            $currentItems[] = [
-                                                'teks_jawaban' => '',
-                                                'skor' => 0,
-                                                'kunci_jawaban' => null,
-                                            ];
-                                        }
-                                    } elseif ($newCount < $currentCount) {
-                                        $currentItems = array_slice($currentItems, 0, $newCount);
-                                    }
-
-                                    $set('jawaban', $currentItems);
-                                }),
+                                        ->default(1)
+                                        ->required()
+                                        ->disabled(fn(Forms\Get $get) => !$get('mapel_id'))
+                                        ->columnSpan(2),
+                                ]),
                         ]),
-                        Forms\Components\Repeater::make('jawaban')
-                            ->relationship()
-                            ->schema([
-                                Forms\Components\Grid::make(12)
-                                    ->schema([
-                                        // 1. INPUT TEKS (6/12)
-                                        Forms\Components\TextInput::make('teks_jawaban')
-                                            ->label(fn(Forms\Get $get) => match ($get('../../tipe_soal')) {
-                                                'BENAR_SALAH' => 'Pernyataan',
-                                                'MENJODOHKAN' => 'Premis Kiri',
-                                                default => 'Teks Jawaban',
-                                            })
-                                            ->required()
-                                            ->placeholder('Ketik isi jawaban/pernyataan...')
-                                            ->columnSpan(6),
 
-                                        // 2. INPUT POIN (2/12)
-                                        Forms\Components\TextInput::make('skor')
-                                            ->label('Poin +/-')
-                                            ->numeric()
-                                            ->default(0)
-                                            ->columnSpan(2),
+                    // STEP 2: KONTEN PERTANYAAN & JAWABAN
+                    Forms\Components\Wizard\Step::make('Konten & Opsi Jawaban')
+                        ->icon('heroicon-o-pencil-square')
+                        ->schema([
+                            Forms\Components\Section::make('Konten Pertanyaan')
+                                ->description('Gunakan toolbar untuk memasukkan gambar atau rumus.')
+                                ->schema([
+                                    \FilamentTiptapEditor\TiptapEditor::make('pertanyaan')
+                                        ->profile('default')
+                                        ->label('')
+                                        ->required()
+                                        ->disk('public')
+                                        ->directory('soal-images')
+                                        ->extraInputAttributes(['style' => 'min-height: 200px;'])
+                                        ->columnSpanFull()
+                                        ->hintAction(
+                                            \Filament\Forms\Components\Actions\Action::make('insert_math')
+                                                ->label('Insert Math (MathLive)')
+                                                ->icon('heroicon-m-calculator')
+                                                ->closeModalByClickingAway(false)
+                                                ->modalWidth('3xl')
+                                                ->form([
+                                                    \Filament\Forms\Components\ViewField::make('latex_code')
+                                                        ->view('filament.forms.components.mathlive-modal-input')
+                                                        ->label('Persamaan Matematika')
+                                                ])
+                                                ->action(function (array $data, \Filament\Forms\Components\Component $component) {
+                                                    $newLatex = $data['latex_code'] ?? '';
+                                                    if ($newLatex) {
+                                                        $currentState = $component->getState() ?? '';
+                                                        $latexStr = ' $$' . $newLatex . '$$ ';
+                                                        
+                                                        if (is_array($currentState)) {
+                                                            $currentState['content'][] = [
+                                                                'type' => 'paragraph',
+                                                                'content' => [['type' => 'text', 'text' => $latexStr]]
+                                                            ];
+                                                            $component->state($currentState);
+                                                        } elseif (is_string($currentState) && str_starts_with(trim($currentState), '{')) {
+                                                            $decoded = json_decode($currentState, true);
+                                                            if (json_last_error() === JSON_ERROR_NONE && isset($decoded['type'])) {
+                                                                $decoded['content'][] = [
+                                                                    'type' => 'paragraph',
+                                                                    'content' => [['type' => 'text', 'text' => $latexStr]]
+                                                                ];
+                                                                $component->state($decoded);
+                                                            } else {
+                                                                $component->state($currentState . '<p>' . $latexStr . '</p>');
+                                                            }
+                                                        } else {
+                                                            $component->state($currentState . '<p>' . $latexStr . '</p>');
+                                                        }
+                                                    }
+                                                })
+                                        ),
+                                    \FilamentTiptapEditor\TiptapEditor::make('pembahasan')
+                                        ->profile('default')
+                                        ->label('Pembahasan (Opsional)')
+                                        ->extraInputAttributes(['style' => 'min-height: 200px;'])
+                                        ->columnSpanFull()
+                                        ->hintAction(
+                                            \Filament\Forms\Components\Actions\Action::make('insert_math_pembahasan')
+                                                ->label('Insert Math (MathLive)')
+                                                ->icon('heroicon-m-calculator')
+                                                ->closeModalByClickingAway(false)
+                                                ->modalWidth('3xl')
+                                                ->form([
+                                                    \Filament\Forms\Components\ViewField::make('latex_code')
+                                                        ->view('filament.forms.components.mathlive-modal-input')
+                                                        ->label('Persamaan Matematika')
+                                                ])
+                                                ->action(function (array $data, \Filament\Forms\Components\Component $component) {
+                                                    $newLatex = $data['latex_code'] ?? '';
+                                                    if ($newLatex) {
+                                                        $currentState = $component->getState() ?? '';
+                                                        $latexStr = ' $$' . $newLatex . '$$ ';
+                                                        
+                                                        if (is_array($currentState)) {
+                                                            $currentState['content'][] = [
+                                                                'type' => 'paragraph',
+                                                                'content' => [['type' => 'text', 'text' => $latexStr]]
+                                                            ];
+                                                            $component->state($currentState);
+                                                        } elseif (is_string($currentState) && str_starts_with(trim($currentState), '{')) {
+                                                            $decoded = json_decode($currentState, true);
+                                                            if (json_last_error() === JSON_ERROR_NONE && isset($decoded['type'])) {
+                                                                $decoded['content'][] = [
+                                                                    'type' => 'paragraph',
+                                                                    'content' => [['type' => 'text', 'text' => $latexStr]]
+                                                                ];
+                                                                $component->state($decoded);
+                                                            } else {
+                                                                $component->state($currentState . '<p>' . $latexStr . '</p>');
+                                                            }
+                                                        } else {
+                                                            $component->state($currentState . '<p>' . $latexStr . '</p>');
+                                                        }
+                                                    }
+                                                })
+                                        ),
+                                    Forms\Components\Hidden::make('nomor_urut')
+                                        ->default(0),
+                                ]),
 
-                                        // 3. KUNCI JAWABAN
-                                        // A. Toggle Benar/Salah (DIHAPUS/DISEMBUNYIKAN untuk PG & PG KOMPLEKS karena pakai Skor Manual)
-                                        // Sesuai request: "skor diberi manual cuma di hiden opsi benar salahnya"
-
-                                        // B. Select untuk Benar/Salah (SMART SCORING)
-                                        Forms\Components\Select::make('kunci_jawaban')
-                                            ->label('Kunci')
-                                            ->options([
-                                                'BENAR' => 'Benar',
-                                                'SALAH' => 'Salah',
+                            Forms\Components\Section::make('Opsi Jawaban & Poin')
+                                ->description('Atur opsi jawaban beserta poin dan kunci yang benar.')
+                                ->schema([
+                                    Forms\Components\Actions::make([
+                                        Forms\Components\Actions\Action::make('atur_jumlah')
+                                            ->label('Atur Jumlah Opsi')
+                                            ->icon('heroicon-m-adjustments-horizontal')
+                                            ->form([
+                                                Forms\Components\TextInput::make('jumlah')
+                                                    ->label('Jumlah Opsi')
+                                                    ->numeric()
+                                                    ->default(4)
+                                                    ->minValue(1)
+                                                    ->maxValue(10)
+                                                    ->required(),
                                             ])
-                                            ->live()
-                                            ->afterStateUpdated(fn($state, Forms\Set $set) => $set('skor', 1))
-                                            ->visible(fn(Forms\Get $get) => $get('../../tipe_soal') === 'BENAR_SALAH')
-                                            ->columnSpan(3),
+                                            ->action(function (array $data, Forms\Get $get, Forms\Set $set) {
+                                                $currentItems = $get('jawaban') ?? [];
+                                                $newCount = (int) $data['jumlah'];
+                                                $currentCount = count($currentItems);
 
-                                        // C. Text untuk Menjodohkan
-                                        Forms\Components\TextInput::make('kunci_jawaban')
-                                            ->label('Pasangan (Kanan)')
-                                            ->placeholder('Pasangan...')
-                                            ->visible(fn(Forms\Get $get) => $get('../../tipe_soal') === 'MENJODOHKAN')
-                                            ->columnSpan(3),
+                                                if ($newCount > $currentCount) {
+                                                    for ($i = $currentCount; $i < $newCount; $i++) {
+                                                        $currentItems[] = [
+                                                            'teks_jawaban' => '',
+                                                            'skor' => 0,
+                                                            'kunci_jawaban' => null,
+                                                        ];
+                                                    }
+                                                } elseif ($newCount < $currentCount) {
+                                                    $currentItems = array_slice($currentItems, 0, $newCount);
+                                                }
+
+                                                $set('jawaban', $currentItems);
+                                            }),
                                     ]),
-                            ])
-                            ->defaultItems(fn(Forms\Get $get) => match ($get('tipe_soal')) {
-                                'BENAR_SALAH' => 4,
-                                default => 4,
-                            })
+                                    Forms\Components\Repeater::make('jawaban')
+                                        ->relationship()
+                                        ->schema([
+                                            Forms\Components\Grid::make(12)
+                                                ->schema([
+                                                    Forms\Components\TextInput::make('teks_jawaban')
+                                                        ->label(fn(Forms\Get $get) => match ($get('../../tipe_soal')) {
+                                                            'BENAR_SALAH' => 'Pernyataan',
+                                                            'MENJODOHKAN' => 'Premis Kiri',
+                                                            default => 'Teks Jawaban',
+                                                        })
+                                                        ->required()
+                                                        ->placeholder('Ketik isi jawaban/pernyataan...')
+                                                        ->columnSpan(6),
 
-                            ->reorderable()
-                            ->collapsible()
-                            ->cloneable()
-                            ->grid(1)
-                            ->itemLabel(fn(array $state): ?string => $state['teks_jawaban'] ?? 'Opsi Jawaban Baru')
-                            ->columnSpanFull()
-                            ->addActionLabel('Tambah Baris'),
-                    ]),
+                                                    Forms\Components\TextInput::make('skor')
+                                                        ->label('Poin +/-')
+                                                        ->numeric()
+                                                        ->default(0)
+                                                        ->columnSpan(2),
+
+                                                    Forms\Components\Select::make('kunci_jawaban')
+                                                        ->label('Kunci')
+                                                        ->options([
+                                                            'BENAR' => 'Benar',
+                                                            'SALAH' => 'Salah',
+                                                        ])
+                                                        ->live()
+                                                        ->afterStateUpdated(fn($state, Forms\Set $set) => $set('skor', 1))
+                                                        ->visible(fn(Forms\Get $get) => $get('../../tipe_soal') === 'BENAR_SALAH')
+                                                        ->columnSpan(3),
+
+                                                    Forms\Components\TextInput::make('kunci_jawaban')
+                                                        ->label('Pasangan (Kanan)')
+                                                        ->placeholder('Pasangan...')
+                                                        ->visible(fn(Forms\Get $get) => $get('../../tipe_soal') === 'MENJODOHKAN')
+                                                        ->columnSpan(3),
+                                                ]),
+                                        ])
+                                        ->defaultItems(fn(Forms\Get $get) => match ($get('tipe_soal')) {
+                                            'BENAR_SALAH' => 4,
+                                            default => 4,
+                                        })
+                                        ->reorderable()
+                                        ->collapsible()
+                                        ->cloneable()
+                                        ->grid(1)
+                                        ->itemLabel(fn(array $state): ?string => $state['teks_jawaban'] ?? 'Opsi Jawaban Baru')
+                                        ->columnSpanFull()
+                                        ->addActionLabel('Tambah Baris'),
+                                ]),
+                        ]),
+                ])->columnSpanFull()
             ]);
     }
 

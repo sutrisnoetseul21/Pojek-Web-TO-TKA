@@ -91,15 +91,39 @@ class BankStimulusResource extends Resource
                         \Filament\Forms\Components\Actions\Action::make('insert_math')
                             ->label('Insert Math (MathLive)')
                             ->icon('heroicon-m-calculator')
+                            ->closeModalByClickingAway(false)
+                            ->modalWidth('3xl')
                             ->form([
                                 \Filament\Forms\Components\ViewField::make('latex_code')
                                     ->view('filament.forms.components.mathlive-modal-input')
                                     ->label('Persamaan Matematika')
                             ])
-                            ->action(function (array $data, $state, \Filament\Forms\Set $set) {
+                            ->action(function (array $data, \Filament\Forms\Components\Component $component) {
                                 $newLatex = $data['latex_code'] ?? '';
                                 if ($newLatex) {
-                                    $set('konten', $state . ' $$' . $newLatex . '$$ ');
+                                    $currentState = $component->getState() ?? '';
+                                    $latexStr = ' $$' . $newLatex . '$$ ';
+                                    
+                                    if (is_array($currentState)) {
+                                        $currentState['content'][] = [
+                                            'type' => 'paragraph',
+                                            'content' => [['type' => 'text', 'text' => $latexStr]]
+                                        ];
+                                        $component->state($currentState);
+                                    } elseif (is_string($currentState) && str_starts_with(trim($currentState), '{')) {
+                                        $decoded = json_decode($currentState, true);
+                                        if (json_last_error() === JSON_ERROR_NONE && isset($decoded['type'])) {
+                                            $decoded['content'][] = [
+                                                'type' => 'paragraph',
+                                                'content' => [['type' => 'text', 'text' => $latexStr]]
+                                            ];
+                                            $component->state($decoded);
+                                        } else {
+                                            $component->state($currentState . '<p>' . $latexStr . '</p>');
+                                        }
+                                    } else {
+                                        $component->state($currentState . '<p>' . $latexStr . '</p>');
+                                    }
                                 }
                             })
                     ),

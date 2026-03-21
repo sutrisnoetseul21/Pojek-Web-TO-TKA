@@ -29,7 +29,7 @@ class RefMapelResource extends Resource
         $user = auth()->user();
 
         if ($user->isAdmin() && $user->jenjang) {
-            $query->where(fn (Builder $q) => $q->where('jenjang', '=', $user->jenjang));
+            $query->where('jenjang', '=', $user->jenjang);
         }
 
         return $query;
@@ -93,8 +93,28 @@ class RefMapelResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                //
-            ])
+                Tables\Filters\SelectFilter::make('jenjang')
+                    ->label('Jenjang')
+                    ->options([
+                        'SD' => 'SD',
+                        'SMP' => 'SMP',
+                        'SMA' => 'SMA',
+                        'SMK' => 'SMK',
+                        'UMUM' => 'UMUM',
+                    ])
+                    ->visible(fn () => ! (auth()->user()->isAdmin() && auth()->user()->jenjang)),
+                
+                Tables\Filters\SelectFilter::make('nama_mapel')
+                    ->label('Nama Mapel')
+                    ->options(function () {
+                        $user = auth()->user();
+                        $query = \App\Models\RefMapel::query()->distinct();
+                        if ($user->isAdmin() && $user->jenjang) {
+                            $query->where('jenjang', $user->jenjang);
+                        }
+                        return $query->pluck('nama_mapel', 'nama_mapel')->toArray();
+                    }),
+            ], layout: \Filament\Tables\Enums\FiltersLayout::AboveContent)
             ->actions([
                 Tables\Actions\EditAction::make(),
             ])
