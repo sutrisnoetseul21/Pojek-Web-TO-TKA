@@ -80,12 +80,29 @@ class BankStimulusResource extends Resource
                     ->required()
                     ->maxLength(255)
                     ->columnSpanFull(),
-                Forms\Components\RichEditor::make('konten')
+                \FilamentTiptapEditor\TiptapEditor::make('konten')
+                    ->profile('default')
                     ->required()
-                    ->fileAttachmentsDisk('public')
-                    ->fileAttachmentsDirectory('stimulus-images')
-                    ->fileAttachmentsVisibility('public')
-                    ->columnSpanFull(),
+                    ->disk('public')
+                    ->directory('stimulus-images')
+                    ->extraInputAttributes(['style' => 'min-height: 200px;'])
+                    ->columnSpanFull()
+                    ->hintAction(
+                        \Filament\Forms\Components\Actions\Action::make('insert_math')
+                            ->label('Insert Math (MathLive)')
+                            ->icon('heroicon-m-calculator')
+                            ->form([
+                                \Filament\Forms\Components\ViewField::make('latex_code')
+                                    ->view('filament.forms.components.mathlive-modal-input')
+                                    ->label('Persamaan Matematika')
+                            ])
+                            ->action(function (array $data, $state, \Filament\Forms\Set $set) {
+                                $newLatex = $data['latex_code'] ?? '';
+                                if ($newLatex) {
+                                    $set('konten', $state . ' $$' . $newLatex . '$$ ');
+                                }
+                            })
+                    ),
                 Forms\Components\Select::make('tipe')
                     ->options([
                         'TEKS' => 'Teks',

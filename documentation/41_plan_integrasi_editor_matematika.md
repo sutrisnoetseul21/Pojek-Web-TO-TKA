@@ -28,3 +28,12 @@ Berikut adalah rencana eksekusi teknis untuk aplikasi Laravel Filament, dirancan
 ---
 > [!IMPORTANT]
 > **Keputusan Integrasi UI:** Rencana ini mengadopsi pendekatan Hibrida. Input menggunakan Tiptap Editor untuk fleksibilitas (dengan opsi menyuntikkan LaTeX via Modal Custom Action), dan output dirender secara dinamis di klien menggunakan KaTeX demi performa. Keutuhan karakter backslash `\` saat transmisi data menjadi titik pengujian paling krusial di Fase 4.
+
+## Progress Saat Ini (21 Maret 2026 - Final)
+1. **Fase 1 (Tiptap Editor)**: Telah berhasil diimplementasikan pada `BankSoalResource` dan `BankStimulusResource`. Tinggi editor disesuaikan ke `200px` (`extraInputAttributes`) agar lebih lega.
+2. **Fase 2 (MathLive)**: Custom Action "Insert Math" sudah terpasang. Isu Virtual Keyboard mati di modal akibat AJAX/Lazy load *fixed* dengan autoloader JS dinamis. Ditambahkan sinkronisasi Textarea alternatif berukuran besar untuk kenyamanan input manual.
+3. **Fase 3 (KaTeX Rendering)**: KaTeX Auto-Render sudah terpasang pada tampilan Layar Siswa (`soal.blade.php`) dan Preview Admin (`lihat-soal.blade.php`).
+4. **Fase 4 (Database)**: Struktur database telah divalidasi dan aman (`LONGTEXT`).
+
+> [!NOTE]
+> Seluruh kendala *Focus Trap* dan inisialisasi script di Modal Filament sudah terselesaikan. Komponen saat ini siap digunakan untuk input rumus matematika.

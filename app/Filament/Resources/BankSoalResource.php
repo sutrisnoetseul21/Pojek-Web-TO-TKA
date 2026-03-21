@@ -154,17 +154,51 @@ class BankSoalResource extends Resource
                 Forms\Components\Section::make('Konten Pertanyaan')
                     ->description('Gunakan toolbar untuk memasukkan gambar, rumus, atau format teks.')
                     ->schema([
-                        Forms\Components\RichEditor::make('pertanyaan')
+                        \FilamentTiptapEditor\TiptapEditor::make('pertanyaan')
+                            ->profile('default')
                             ->label('')
                             ->required()
-                            ->fileAttachmentsDisk('public')
-                            ->fileAttachmentsDirectory('soal-images')
-                            ->fileAttachmentsVisibility('public')
-                            ->columnSpanFull(),
-                        Forms\Components\Textarea::make('pembahasan')
+                            ->disk('public')
+                            ->directory('soal-images')
+                            ->extraInputAttributes(['style' => 'min-height: 200px;'])
+                            ->columnSpanFull()
+                            ->hintAction(
+                                \Filament\Forms\Components\Actions\Action::make('insert_math')
+                                    ->label('Insert Math (MathLive)')
+                                    ->icon('heroicon-m-calculator')
+                                    ->form([
+                                        \Filament\Forms\Components\ViewField::make('latex_code')
+                                            ->view('filament.forms.components.mathlive-modal-input')
+                                            ->label('Persamaan Matematika')
+                                    ])
+                                    ->action(function (array $data, $state, \Filament\Forms\Set $set) {
+                                        $newLatex = $data['latex_code'] ?? '';
+                                        if ($newLatex) {
+                                            $set('pertanyaan', $state . ' $$' . $newLatex . '$$ ');
+                                        }
+                                    })
+                            ),
+                        \FilamentTiptapEditor\TiptapEditor::make('pembahasan')
+                            ->profile('default')
                             ->label('Pembahasan (Opsional)')
-                            ->rows(2)
-                            ->columnSpanFull(),
+                            ->extraInputAttributes(['style' => 'min-height: 200px;'])
+                            ->columnSpanFull()
+                            ->hintAction(
+                                \Filament\Forms\Components\Actions\Action::make('insert_math_pembahasan')
+                                    ->label('Insert Math (MathLive)')
+                                    ->icon('heroicon-m-calculator')
+                                    ->form([
+                                        \Filament\Forms\Components\ViewField::make('latex_code')
+                                            ->view('filament.forms.components.mathlive-modal-input')
+                                            ->label('Persamaan Matematika')
+                                    ])
+                                    ->action(function (array $data, $state, \Filament\Forms\Set $set) {
+                                        $newLatex = $data['latex_code'] ?? '';
+                                        if ($newLatex) {
+                                            $set('pembahasan', $state . ' $$' . $newLatex . '$$ ');
+                                        }
+                                    })
+                            ),
                         Forms\Components\Hidden::make('nomor_urut')
                             ->default(0),
                     ]),
