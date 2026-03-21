@@ -94,7 +94,7 @@ class BankSoalResource extends Resource
                                     ->live()
                                     ->disabled(fn(Forms\Get $get) => !$get('mapel_id'))
                                     ->afterStateUpdated(fn(Forms\Set $set) => $set('stimulus_id', null))
-                                    ->label('Kategori / Paket'),
+                                    ->label('Paket Soal'),
                             ]),
 
                         // Baris 2: Tipe Soal, Stimulus, Bobot
@@ -274,7 +274,7 @@ class BankSoalResource extends Resource
         return $table
             ->columns([
                 Tables\Columns\TextColumn::make('paket.nama_paket')
-                    ->label('Paket')
+                    ->label('Paket Soal')
                     ->searchable()
                     ->sortable(),
                 Tables\Columns\TextColumn::make('mapel.nama_mapel')
@@ -313,24 +313,76 @@ class BankSoalResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('mapel_id')
-                    ->relationship('mapel', 'nama_mapel')
-                    ->label('Mata Pelajaran')
-                    ->preload(),
-                Tables\Filters\SelectFilter::make('paket_id')
-                    ->relationship('paket', 'nama_paket')
-                    ->label('Paket')
-                    ->preload(),
-                Tables\Filters\SelectFilter::make('tipe_soal')
-                    ->options([
-                        'PG_TUNGGAL' => 'PG Tunggal',
-                        'PG_KOMPLEKS' => 'PG Kompleks',
-                        'BENAR_SALAH' => 'Benar/Salah',
-                        'MENJODOHKAN' => 'Menjodohkan',
-                        'ISIAN' => 'Isian',
+                Tables\Filters\Filter::make('advanced_filters')
+                    ->columnSpanFull()
+                    ->form([
+                        Forms\Components\Grid::make(4)
+                            ->schema([
+                                Forms\Components\Select::make('jenjang')
+                                    ->label('Jenjang')
+                                    ->options([
+                                        'SD' => 'SD',
+                                        'SMP' => 'SMP',
+                                        'SMA' => 'SMA',
+                                        'SMK' => 'SMK',
+                                        'UMUM' => 'UMUM',
+                                    ])
+                                    ->placeholder('All')
+                                    ->visible(fn () => ! (auth()->user()->isAdmin() && auth()->user()->jenjang))
+                                    ->live(),
+                                
+                                Forms\Components\Select::make('mapel_id')
+                                    ->label('Mata Pelajaran')
+                                    ->placeholder('All')
+                                    ->options(function (Forms\Get $get) {
+                                        $user = auth()->user();
+                                        $jenjang = $get('jenjang') ?? ($user->isAdmin() ? $user->jenjang : null);
+                                        
+                                        return \App\Models\RefMapel::when($jenjang, fn($q) => $q->where('jenjang', $jenjang))
+                                            ->get()
+                                            ->mapWithKeys(fn($m) => [$m->id => "{$m->nama_mapel} - {$m->jenjang}"]);
+                                    })
+                                    ->live()
+                                    ->searchable()
+                                    ->preload(),
+
+                                Forms\Components\Select::make('paket_id')
+                                    ->label('Paket Soal')
+                                    ->placeholder('All')
+                                    ->options(function (Forms\Get $get) {
+                                        $mapelId = $get('mapel_id');
+                                        if (!$mapelId) return [];
+                                        
+                                        return \App\Models\RefPaketSoal::where('mapel_id', $mapelId)
+                                            ->pluck('nama_paket', 'id');
+                                    })
+                                    ->disabled(fn (Forms\Get $get) => !$get('mapel_id'))
+                                    ->searchable()
+                                    ->preload(),
+                                
+                                Forms\Components\Select::make('tipe_soal')
+                                    ->label('Tipe Soal')
+                                    ->placeholder('All')
+                                    ->options([
+                                        'PG_TUNGGAL' => 'PG Tunggal',
+                                        'PG_KOMPLEKS' => 'PG Kompleks',
+                                        'BENAR_SALAH' => 'Benar/Salah',
+                                        'MENJODOHKAN' => 'Menjodohkan',
+                                        'ISIAN' => 'Isian',
+                                    ]),
+                            ]),
                     ])
-                    ->label('Tipe Soal'),
-            ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when($data['mapel_id'], fn ($q, $mId) => $q->where('mapel_id', $mId))
+                            ->when($data['paket_id'], fn ($q, $pId) => $q->where('paket_id', $pId))
+                            ->when($data['tipe_soal'], fn ($q, $type) => $q->where('tipe_soal', $type))
+                            ->when($data['jenjang'] && empty($data['mapel_id']), function ($q) use ($data) {
+                                $q->whereHas('mapel', fn ($m) => $m->where('jenjang', $data['jenjang']));
+                            });
+                    })
+            ], layout: \Filament\Tables\Enums\FiltersLayout::AboveContent)
+            ->filtersFormColumns(4)
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),

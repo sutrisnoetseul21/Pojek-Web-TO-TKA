@@ -37,9 +37,9 @@ class RefPaketSoalResource extends Resource
         return $query;
     }
 
-    protected static ?string $navigationLabel = 'Kategori Soal';
-    protected static ?string $modelLabel = 'Kategori Soal';
-    protected static ?string $pluralModelLabel = 'Kategori Soal';
+    protected static ?string $navigationLabel = 'Paket Soal';
+    protected static ?string $modelLabel = 'Paket Soal';
+    protected static ?string $pluralModelLabel = 'Paket Soal';
     protected static ?string $navigationGroup = 'Bank Soal & Mata Pelajaran';
     protected static ?int $navigationSort = 4;
 
@@ -74,7 +74,7 @@ class RefPaketSoalResource extends Resource
                         }
                     }),
                 Forms\Components\TextInput::make('nama_paket')
-                    ->label('Nama Kategori / Folder')
+                    ->label('Nama Paket Soal')
                     ->required()
                     ->maxLength(255),
                 Forms\Components\TextInput::make('jenjang')
@@ -124,18 +124,49 @@ class RefPaketSoalResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('jenjang')
-                    ->options([
-                        'SD' => 'SD',
-                        'SMP' => 'SMP',
-                        'SMA' => 'SMA',
-                        'UMUM' => 'UMUM',
-                    ]),
-                Tables\Filters\SelectFilter::make('mapel_id')
-                    ->relationship('mapel', 'nama_mapel')
-                    ->label('Mata Pelajaran')
-                    ->preload(),
-            ])
+                Tables\Filters\Filter::make('advanced_filters')
+                    ->columnSpanFull()
+                    ->form([
+                        Forms\Components\Grid::make(2)
+                            ->schema([
+                                Forms\Components\Select::make('jenjang')
+                                    ->label('Jenjang')
+                                    ->options([
+                                        'SD' => 'SD',
+                                        'SMP' => 'SMP',
+                                        'SMA' => 'SMA',
+                                        'SMK' => 'SMK',
+                                        'UMUM' => 'UMUM',
+                                    ])
+                                    ->placeholder('All')
+                                    ->visible(fn () => ! (auth()->user()->isAdmin() && auth()->user()->jenjang))
+                                    ->live(),
+                                
+                                Forms\Components\Select::make('mapel_id')
+                                    ->label('Mata Pelajaran')
+                                    ->placeholder('All')
+                                    ->options(function (Forms\Get $get) {
+                                        $user = auth()->user();
+                                        $jenjang = $get('jenjang') ?? ($user->isAdmin() ? $user->jenjang : null);
+                                        
+                                        return \App\Models\RefMapel::when($jenjang, fn($q) => $q->where('jenjang', $jenjang))
+                                            ->get()
+                                            ->mapWithKeys(fn($m) => [$m->id => "{$m->nama_mapel} - {$m->jenjang}"]);
+                                    })
+                                    ->live()
+                                    ->searchable()
+                                    ->preload(),
+                            ]),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when($data['mapel_id'], fn ($q, $mId) => $q->where('mapel_id', $mId))
+                            ->when($data['jenjang'] && empty($data['mapel_id']), function ($q) use ($data) {
+                                $q->whereHas('mapel', fn ($m) => $m->where('jenjang', $data['jenjang']));
+                            });
+                    })
+            ], layout: \Filament\Tables\Enums\FiltersLayout::AboveContent)
+            ->filtersFormColumns(4)
             ->actions([
                 Tables\Actions\ViewAction::make(),
                 Tables\Actions\EditAction::make(),
