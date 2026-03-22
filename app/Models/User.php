@@ -150,6 +150,22 @@ class User extends Authenticatable implements FilamentUser
             ->withTimestamps();
     }
 
+    /**
+     * Relasi ke penugasan ruangan proktor
+     */
+    public function penugasanRuangan()
+    {
+        return $this->hasMany(JadwalRuanganProktor::class, 'proktor_id');
+    }
+
+    /**
+     * Check if user is proctor
+     */
+    public function isProktor(): bool
+    {
+        return $this->role === 'proktor';
+    }
+
     // ─── Scopes ────────────────────────────────────────────────
 
     /**

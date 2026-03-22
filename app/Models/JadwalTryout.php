@@ -81,6 +81,12 @@ class JadwalTryout extends Model
         });
     }
 
+    // Relasi ke ruangan dan proktor
+    public function ruanganProktors()
+    {
+        return $this->hasMany(JadwalRuanganProktor::class);
+    }
+
     // Relasi ke paket tryout
     public function paketTryout()
     {
