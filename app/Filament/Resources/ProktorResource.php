@@ -74,21 +74,6 @@ class ProktorResource extends Resource
                         Forms\Components\Hidden::make('role')
                             ->default('proktor'),
                     ])->columns(['default' => 2]),
-
-                Forms\Components\Section::make('Otoritas Wilayah')
-                    ->description('Tentukan sekolah tempat tugas Proktor')
-                    ->schema([
-                        Forms\Components\Select::make('sekolah_id')
-                            ->label('Sekolah')
-                            ->relationship('sekolahRelation', 'nama_sekolah')
-                            ->visible(fn () => auth()->user()->hasRole('super_admin'))
-                            ->required(fn () => auth()->user()->hasRole('super_admin'))
-                            ->dehydrated()
-                            ->live(),
-                        Forms\Components\Hidden::make('sekolah_id')
-                            ->default(fn () => auth()->user()->sekolah_id)
-                            ->visible(fn () => auth()->user()->hasRole('admin')),
-                    ])->columns(['default' => 1]),
             ]);
     }
 
@@ -106,19 +91,15 @@ class ProktorResource extends Resource
                     ->searchable()
                     ->sortable()
                     ->copyable(),
-                Tables\Columns\TextColumn::make('plain_password')
-                    ->label('Password')
-                    ->searchable()
-                    ->copyable()
-                    ->toggleable(),
                 Tables\Columns\TextColumn::make('nama_lengkap')
                     ->label('Nama Pengawas')
                     ->searchable()
                     ->placeholder('Belum diisi'),
-                Tables\Columns\TextColumn::make('sekolahRelation.nama_sekolah')
-                    ->label('Sekolah')
-                    ->searchable()
-                    ->placeholder('Belum diisi'),
+                Tables\Columns\TextColumn::make('penugasanRuangan.kelas.nama_kelas')
+                    ->label('Kelas Tugas')
+                    ->badge()
+                    ->placeholder('Semua Kelas')
+                    ->separator(', '),
                 Tables\Columns\TextColumn::make('created_at')
                     ->label('Dibuat')
                     ->dateTime('d M Y')
@@ -135,6 +116,17 @@ class ProktorResource extends Resource
                     ->visible(fn () => auth()->user()->hasRole('super_admin')),
             ])
             ->actions([
+                Tables\Actions\Action::make('alokasi')
+                    ->label('Alokasi')
+                    ->icon('heroicon-o-calendar-days')
+                    ->color('warning')
+                    ->url(fn ($record) => \App\Filament\Resources\PenugasanProktorResource::getUrl('index', [
+                        'tableFilters' => [
+                            'proktor_id' => [
+                                'value' => $record->id,
+                            ],
+                        ],
+                    ])),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
@@ -148,7 +140,7 @@ class ProktorResource extends Resource
     public static function getRelations(): array
     {
         return [
-            RelationManagers\JadwalRuanganRelationManager::class,
+            \App\Filament\Resources\ProktorResource\RelationManagers\JadwalRuanganRelationManager::class,
         ];
     }
 

@@ -64,6 +64,7 @@ Tabel pivot yang menghubungkan **Jadwal ↔ Ruangan ↔ Proktor** dalam satu tab
 | `jadwal_tryout_id` | BigInt (FK) | Relasi ke `jadwal_tryout` |
 | `ruangan_id` | BigInt (FK) | Relasi ke `ruangan` |
 | `proktor_id` | BigInt (FK, Nullable) | Relasi ke `users` (role=proktor) |
+| `kelas_id` | BigInt (FK, Nullable) | **[NEW]** Relasi ke `kelas`. Kosong = Semua kelas di ruangan tersebut |
 | `status` | Enum (active/inactive) | Untuk histori penggantian tanpa hapus data |
 | `catatan` | Text (Nullable) | Catatan khusus |
 | `created_at`, `updated_at` | Timestamp | - |
@@ -119,6 +120,7 @@ Schema::create('jadwal_ruangan_proktor', function (Blueprint $table) {
     $table->foreignId('jadwal_tryout_id')->constrained('jadwal_tryout')->onDelete('cascade');
     $table->foreignId('ruangan_id')->constrained('ruangan')->onDelete('cascade');
     $table->foreignId('proktor_id')->nullable()->constrained('users')->onDelete('set null');
+    $table->foreignId('kelas_id')->nullable()->index()->constrained('kelas')->onDelete('set null'); // [NEW]
     $table->enum('status', ['active', 'inactive'])->default('active');
     $table->text('catatan')->nullable();
     $table->timestamps();
@@ -137,7 +139,7 @@ class JadwalRuanganProktor extends Model
     protected $table = 'jadwal_ruangan_proktor';
 
     protected $fillable = [
-        'jadwal_tryout_id', 'ruangan_id', 'proktor_id', 'status', 'catatan',
+        'jadwal_tryout_id', 'ruangan_id', 'proktor_id', 'kelas_id', 'status', 'catatan',
     ];
 
     public function jadwalTryout()
@@ -153,6 +155,11 @@ class JadwalRuanganProktor extends Model
     public function proktor()
     {
         return $this->belongsTo(User::class, 'proktor_id');
+    }
+
+    public function kelas()
+    {
+        return $this->belongsTo(Kelas::class);
     }
 
     public function scopeActive($query)
@@ -413,24 +420,14 @@ if ($user->role === 'proktor') {
 
 ## 📊 Status Eksekusi (Progress)
 
-### 🔵 Fase 1 — Core
-- [x] **Langkah A: Fondasi Database & Model** *(Selesai — 22 Mar 2026)*
-  - ✅ Migrasi `jadwal_ruangan_proktor` dijalankan
-  - ✅ Model `JadwalRuanganProktor` dibuat
-  - ✅ Relasi di `JadwalTryout`, `Ruangan`, `User` ditambahkan
-  - 🛠️ **Fix Bug**: Migrasi `add_proktor_to_user_role_enum_table` dijalankan untuk menambah `'proktor'` ke enum `users.role` (mengatasi Error 1265).
-
-- [x] **Langkah B: Hak Akses & Interface Admin** *(Selesai — 22 Mar 2026)*
-  - ✅ Helper `isProktor()` & Perizinan Panel di `User.php` ditambahkan
-  - ✅ Role `proktor` di `RolePermissionSeeder` dibuat & dijalankan
-  - ✅ `RuanganProktorRelationManager` & Page `ViewJadwalTryout` dibuat & didaftarkan
-
-- [x] **Langkah C: Pembatasan & Trait Monitoring** *(Selesai — 22 Mar 2026)*
-  - ✅ Trait `HasProktorFilter` dibuat & diintegrasikan di 6 halaman monitoring
-  - ✅ Query `StatusPeserta`, `DaftarPeserta`, `KelompokTes`, `DaftarLogin`, `RequestReset` terfilter per ruangan Proktor
-  - ✅ Tombol aksi Token di `StatusTes` berhasil disembunyikan untuk Proktor (Read-only)
-  - ✅ Verifikasi login & akses panel Proktor berhasil ditest via browser (Tanpa 500 error)
+- [x] **Langkah D: Pembagian Kelas & Optimasi UX** *(Selesai — 23 Mar 2026)*
+  - ✅ Tambah kolom `kelas_id` di tabel `jadwal_ruangan_proktor` (nullable untuk support "Semua Kelas").
+  - ✅ Update `HasProktorFilter` untuk support pembagian per-kelas ter-isolasi.
+  - ✅ Kunci kolom `Tingkat` & `Jenjang` di Jadwal form agar 100% otomatis dari paket.
+  - ✅ Sembunyikan Password di tabel halaman depan Proktor.
+  - ✅ Buat sidebar menu baru **Alokasi Pengawas** (`PenugasanProktorResource`) untuk akses proktor yang terstruktur.
+  - ✅ Pasang Button **Alokasi** ber-filter direct di row Proktor untuk redirect cepat.
 
 ---
-*Fase 1 Selesai. Menunggu persetujuan untuk melangkah ke Fase 2 (Automasi).*
-```
+*Fase 1 & Optimasi Kelas Selesai.*
+

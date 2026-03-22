@@ -25,6 +25,11 @@ class CreateProktor extends CreateRecord
             $data['email'] = strtolower($data['username']) . '@proktor.local';
         }
 
+        $user = auth()->user();
+        if ($user->hasRole('admin') && $user->sekolah_id) {
+            $data['sekolah_id'] = $user->sekolah_id;
+        }
+
         return $data;
     }
 

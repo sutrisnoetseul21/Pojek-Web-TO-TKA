@@ -15,6 +15,7 @@ class JadwalRuanganProktor extends Model
         'jadwal_tryout_id',
         'ruangan_id',
         'proktor_id',
+        'kelas_id',
         'status',
         'catatan',
     ];
@@ -32,6 +33,11 @@ class JadwalRuanganProktor extends Model
     public function proktor()
     {
         return $this->belongsTo(User::class, 'proktor_id');
+    }
+
+    public function kelas()
+    {
+        return $this->belongsTo(Kelas::class);
     }
 
     public function scopeActive($query)

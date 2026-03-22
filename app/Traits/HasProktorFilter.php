@@ -22,13 +22,29 @@ trait HasProktorFilter
                 ->where('tgl_selesai', '>=', now()->startOfDay())
                 ->pluck('id');
 
-            // 2. Ambil ID Ruangan yang ditugaskan ke proktor ini (status aktif)
-            $assignedRuanganIds = JadwalRuanganProktor::where('proktor_id', $user->id)
+            // 2. Ambil ID Ruangan & Kelas yang ditugaskan ke proktor ini (status aktif)
+            $assignedData = JadwalRuanganProktor::where('proktor_id', $user->id)
                 ->where('status', 'active')
                 ->whereIn('jadwal_tryout_id', $activeJadwalIds)
-                ->pluck('ruangan_id');
+                ->get(['ruangan_id', 'kelas_id']);
 
-            return $query->whereIn('ruangan_id', $assignedRuanganIds);
+            // Optimasi: Kelompokkan ruang-kelas
+            $allClassRuanganIds = $assignedData->where('kelas_id', null)->pluck('ruangan_id')->toArray();
+            $specificClassData = $assignedData->where('kelas_id', '!=', null)->groupBy('ruangan_id');
+
+            return $query->where(function ($q) use ($allClassRuanganIds, $specificClassData) {
+                if (!empty($allClassRuanganIds)) {
+                    $q->orWhereIn('ruangan_id', $allClassRuanganIds);
+                }
+
+                foreach ($specificClassData as $ruanganId => $items) {
+                    $kelasIds = $items->pluck('kelas_id')->toArray();
+                    $q->orWhere(function ($sq) use ($ruanganId, $kelasIds) {
+                        $sq->where('ruangan_id', $ruanganId)
+                           ->whereHas('user', fn ($uq) => $uq->whereIn('kelas_id', $kelasIds));
+                    });
+                }
+            });
         }
 
         return $query;

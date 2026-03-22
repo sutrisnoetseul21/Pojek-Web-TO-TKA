@@ -50,6 +50,32 @@ class JadwalRuanganRelationManager extends RelationManager
                     ->native(false)
                     ->searchable(),
 
+                Forms\Components\Select::make('kelas_id')
+                    ->label('Kelas/Rombel')
+                    ->options(function (Forms\Get $get, RelationManager $livewire) {
+                        $jadwalId = $get('jadwal_tryout_id');
+                        if (!$jadwalId) return [];
+
+                        $jadwal = \App\Models\JadwalTryout::with(['kelases', 'paketTryout'])->find($jadwalId);
+                        if (!$jadwal) return [];
+
+                        return $jadwal->kelases()->count() > 0
+                            ? $jadwal->kelases()->pluck('nama_kelas', 'kelas.id')->toArray()
+                            : \App\Models\Kelas::where('sekolah_id', $livewire->ownerRecord->sekolah_id)
+                                ->when($jadwal->paketTryout?->tingkat, fn ($q, $t) => $q->where('tingkat', $t))
+                                ->pluck('nama_kelas', 'id')
+                                ->toArray();
+                    })
+                    ->nullable()
+                    ->placeholder('Semua Kelas (Default)')
+                    ->native(false)
+                    ->searchable()
+                    ->unique(ignoreRecord: true, modifyRuleUsing: function (\Illuminate\Validation\Rules\Unique $rule, Forms\Get $get, RelationManager $livewire) {
+                        return $rule->where('proktor_id', $livewire->ownerRecord->id)
+                                    ->where('jadwal_tryout_id', $get('jadwal_tryout_id'))
+                                    ->where('ruangan_id', $get('ruangan_id'));
+                    }),
+
                 Forms\Components\Select::make('status')
                     ->options([
                         'active' => 'Aktif',
@@ -79,6 +105,11 @@ class JadwalRuanganRelationManager extends RelationManager
                     ->label('Ruangan')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('kelas.nama_kelas')
+                    ->label('Kelas/Rombel')
+                    ->placeholder('Semua Kelas')
+                    ->badge()
+                    ->color('info'),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()

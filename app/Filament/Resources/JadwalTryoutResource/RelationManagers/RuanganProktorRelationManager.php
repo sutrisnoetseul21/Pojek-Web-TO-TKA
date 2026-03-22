@@ -40,6 +40,25 @@ class RuanganProktorRelationManager extends RelationManager
                     ->nullable()
                     ->native(false)
                     ->searchable(),
+                Forms\Components\Select::make('kelas_id')
+                    ->label('Kelas/Rombel')
+                    ->options(fn (RelationManager $livewire) => 
+                        $livewire->ownerRecord->kelases()->count() > 0
+                            ? $livewire->ownerRecord->kelases()->pluck('nama_kelas', 'kelas.id')->toArray()
+                            : \App\Models\Kelas::where('sekolah_id', $livewire->ownerRecord->sekolah_id)
+                                ->when($livewire->ownerRecord->paketTryout?->tingkat, fn ($q, $t) => $q->where('tingkat', $t))
+                                ->pluck('nama_kelas', 'id')
+                                ->toArray()
+                    )
+                    ->nullable()
+                    ->placeholder('Semua Kelas (Default)')
+                    ->native(false)
+                    ->searchable()
+                    ->unique(ignoreRecord: true, modifyRuleUsing: function (\Illuminate\Validation\Rules\Unique $rule, \Filament\Forms\Get $get, RelationManager $livewire) {
+                        return $rule->where('jadwal_tryout_id', $livewire->ownerRecord->id)
+                                    ->where('ruangan_id', $get('ruangan_id'))
+                                    ->where('proktor_id', $get('proktor_id'));
+                    }),
                 Forms\Components\Select::make('status')
                     ->options([
                         'active' => 'Aktif',
@@ -69,6 +88,11 @@ class RuanganProktorRelationManager extends RelationManager
                     ->default('-')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('kelas.nama_kelas')
+                    ->label('Kelas/Rombel')
+                    ->placeholder('Semua Kelas')
+                    ->badge()
+                    ->color('info'),
                 Tables\Columns\TextColumn::make('status')
                     ->label('Status')
                     ->badge()

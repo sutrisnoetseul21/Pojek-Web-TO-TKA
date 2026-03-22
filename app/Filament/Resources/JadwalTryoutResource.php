@@ -75,6 +75,7 @@ class JadwalTryoutResource extends Resource
                             ])
                             ->live()
                             ->dehydrated(false)
+                            ->disabled()
                             ->visible(fn () => ! (auth()->user()->isAdmin() && auth()->user()->jenjang))
                             ->afterStateHydrated(function ($set, $record) {
                                 if ($record && $record->paketTryout) {
@@ -92,9 +93,10 @@ class JadwalTryoutResource extends Resource
                                     'SMA', 'SMK' => ['10'=>'10', '11'=>'11', '12'=>'12'],
                                     default => []
                                 };
-                            })
+                             })
                             ->live()
                             ->dehydrated(false)
+                            ->disabled()
                             ->placeholder('-- Pilih Tingkat --')
                             ->afterStateHydrated(function ($set, $record) {
                                 if ($record && $record->paketTryout) {
@@ -118,7 +120,7 @@ class JadwalTryoutResource extends Resource
                                     ->when($tingkat, fn ($q) => $q->where('tingkat', $tingkat))
                                     ->get()
                                     ->mapWithKeys(fn ($p) => [$p->id => ($p->kode ? "[{$p->kode}] " : "") . $p->nama_paket]);
-                            })
+                             })
                             ->searchable()
                             ->required()
                             ->live()
@@ -130,34 +132,20 @@ class JadwalTryoutResource extends Resource
                                         $set('tingkat', $paket->tingkat);
                                     }
                                 }
-                            })
+                             })
                             ->helperText('Pilih paket ujian yang akan dijadwalkan'),
-                        Forms\Components\Checkbox::make('pilih_semua_kelas')
-                            ->label('Pilih Semua Kelas di Tingkat Ini')
-                            ->live()
-                            ->dehydrated(false)
-                            ->afterStateUpdated(function ($state, Forms\Set $set, Forms\Get $get) {
-                                if ($state) {
-                                    $sekolahId = $get('sekolah_id') ?? auth()->user()->sekolah_id;
-                                    $tingkat = $get('tingkat');
-                                    
-                                    $ids = \App\Models\Kelas::where('sekolah_id', $sekolahId)
-                                        ->when($tingkat, fn($q) => $q->where('tingkat', $tingkat))
-                                        ->pluck('id')
-                                        ->toArray();
-                                        
-                                    $set('kelases', $ids);
-                                } else {
-                                    $set('kelases', []);
-                                }
-                            }),
 
                         Forms\Components\Select::make('kelases')
                             ->label('Target Kelas')
-                            ->relationship('kelases', 'nama_kelas', modifyQueryUsing: function (Builder $query, Forms\Get $get) {
+                            ->relationship('kelases', 'nama_kelas', modifyQueryUsing: function (Builder $query, Forms\Get $get, ?\Illuminate\Database\Eloquent\Model $record) {
                                 $query->where('sekolah_id', $get('sekolah_id'));
                                 if ($get('tingkat')) {
-                                    $query->where('tingkat', $get('tingkat'));
+                                    $query->where(function ($q) use ($get, $record) {
+                                        $q->where('tingkat', $get('tingkat'));
+                                        if ($record) {
+                                            $q->orWhereIn('kelas.id', $record->kelases()->pluck('kelas.id')->toArray());
+                                        }
+                                    });
                                 }
                                 return $query;
                             })
