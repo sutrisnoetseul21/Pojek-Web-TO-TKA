@@ -70,7 +70,6 @@ class StatusTes extends Page implements HasTable
                     ->action(
                         \Filament\Tables\Actions\Action::make('set_active')
                             ->requiresConfirmation()
-                            ->visible(fn () => !auth()->user()->isProktor())
                             ->action(function (JadwalTryout $record) {
                                 if ($record->is_token_active) {
                                     $record->update(['is_token_active' => false]);

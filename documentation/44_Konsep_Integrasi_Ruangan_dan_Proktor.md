@@ -15,9 +15,11 @@ Mengintegrasikan dua menu yang sudah ada (Ruangan & Proktor) ke dalam alur ujian
 
 ## ✅ Keputusan yang Sudah Disetujui
 
+- **Set/Unset Token**: **Opsi B - Admin & Proktor**
+  *   *Keputusan*: Proktor **DIBERIKAN** izin untuk Set/Unset token rilis demi fleksibilitas pembagian token di ruangan masing-masing. (Revisi per user: 22 Mar 2026)
+  *   *Catatan*: Token yang rilis tetap bersifat global/sesuai jadwal.
 | No | Keputusan | Hasil |
 |:---|:----------|:------|
-| 1 | Proktor boleh Set/Unset Token? | **Tidak** — hanya bisa **Lihat Token** (read-only, bisa copy untuk ditulis di papan tulis) |
 | 2 | 1 Ruangan = berapa Proktor? | **1 proktor cukup**, tapi tanpa unique constraint agar bisa ditambah ke depan. 1 proktor bisa 2+ ruangan |
 | 3 | Auto-distribute peserta ke ruangan? | **Ya — Prioritas Tinggi** (Fase 2) |
 | 4 | Dashboard khusus Proktor? | **Fitur masa depan** (lihat file 45) |
