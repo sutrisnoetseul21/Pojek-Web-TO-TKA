@@ -17,6 +17,7 @@ class PaketTryout extends Model
         'kode',
         'deskripsi',
         'jenjang',
+        'tingkat',
         'total_waktu',
         'is_active',
     ];

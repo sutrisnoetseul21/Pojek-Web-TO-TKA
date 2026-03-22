@@ -55,207 +55,229 @@ class PaketTryoutResource extends Resource
     {
         return $form
             ->schema([
-                Forms\Components\Section::make('Keterangan Paket & Sekolah')
-                    ->description('Tentukan sekolah dan informasi dasar paket tryout')
-                    ->schema([
-                        Forms\Components\Select::make('sekolah_id')
-                            ->label('Sekolah (Opsional)')
-                            ->relationship('sekolah', 'nama_sekolah')
-                            ->searchable()
-                            ->preload()
-                            ->hint('Kosongkan jika paket bersifat GLOBAL/Nasional')
-                            ->disabled(fn () => auth()->user()->isAdmin())
-                            ->dehydrated()
-                            ->default(fn () => auth()->user()->sekolah_id),
-                        Forms\Components\TextInput::make('nama_paket')
-                            ->label('Nama Paket Tryout')
-                            ->placeholder('Contoh: TRYOUT AKBAR TKA 1')
-                            ->required()
-                            ->maxLength(255)
-                            ->live(onBlur: true)
-                            ->afterStateUpdated(function (Forms\Set $set, ?string $state) {
-                                if (!$state) return;
-                                $words = explode(' ', preg_replace('/[^a-zA-Z0-9 ]/', '', $state));
-                                $initials = '';
-                                foreach ($words as $w) {
-                                    if (!empty($w)) {
-                                        $initials .= strtoupper($w[0]);
-                                    }
-                                }
-                                $set('kode', $initials);
-                            }),
-                        Forms\Components\TextInput::make('kode')
-                            ->label('Kode Tes')
-                            ->placeholder('Contoh: TKA1')
-                            ->required()
-                            ->maxLength(50)
-                            ->hint('Otomatis terisi dari inisial nama, bisa Anda ubah.'),
-                        Forms\Components\Textarea::make('deskripsi')
-                            ->label('Deskripsi')
-                            ->placeholder('Deskripsi singkat tentang paket tryout ini...')
-                            ->rows(2)
-                            ->columnSpanFull(),
-                        Forms\Components\Select::make('jenjang')
-                            ->options([
-                                'SD' => 'SD',
-                                'SMP' => 'SMP',
-                                'SMA' => 'SMA',
-                                'SMK' => 'SMK',
-                                'UMUM' => 'UMUM',
-                            ])
-                            ->required()
-                            ->default(fn () => auth()->user()->jenjang ?? 'UMUM')
-                            ->disabled(fn () => auth()->user()->isAdmin() && auth()->user()->jenjang !== null)
-                            ->dehydrated(),
-                        Forms\Components\Toggle::make('is_active')
-                            ->label('Aktif')
-                            ->helperText('Paket aktif bisa dijadwalkan'),
-                    ])->columns(2),
-
-                Forms\Components\Section::make('Daftar Mata Pelajaran')
-                    ->description('Tentukan mapel dan sumber soal untuk paket ini. Drag untuk mengubah urutan.')
-                    ->schema([
-                        Forms\Components\Repeater::make('mapelItems')
-                            ->relationship()
-                            ->label('')
-                            ->schema([
-                                Forms\Components\Grid::make(4)
-                                    ->schema([
-                                        Forms\Components\Select::make('mapel_id')
-                                            ->label('Mata Pelajaran')
-                                            ->options(function (callable $get) {
-                                                $user = auth()->user();
-                                                $query = \App\Models\RefMapel::query();
-
-                                                if ($user->isAdmin() && $user->jenjang) {
-                                                    $query->where('jenjang', $user->jenjang);
+                Forms\Components\Wizard::make([
+                    Forms\Components\Wizard\Step::make('Keterangan Paket & Sekolah')
+                        ->icon('heroicon-o-adjustments-horizontal')
+                        ->description('Tentukan sekolah dan informasi dasar paket tryout')
+                        ->schema([
+                            Forms\Components\Grid::make(2)
+                                ->schema([
+                                    Forms\Components\Select::make('sekolah_id')
+                                        ->label('Sekolah (Opsional)')
+                                        ->relationship('sekolah', 'nama_sekolah')
+                                        ->searchable()
+                                        ->preload()
+                                        ->hint('Kosongkan jika paket bersifat GLOBAL/Nasional')
+                                        ->disabled(fn () => auth()->user()->isAdmin())
+                                        ->dehydrated()
+                                        ->default(fn () => auth()->user()->sekolah_id),
+                                    Forms\Components\TextInput::make('nama_paket')
+                                        ->label('Nama Paket Tryout')
+                                        ->placeholder('Contoh: TRYOUT AKBAR TKA 1')
+                                        ->required()
+                                        ->maxLength(255)
+                                        ->live(onBlur: true)
+                                        ->afterStateUpdated(function (Forms\Set $set, ?string $state) {
+                                            if (!$state) return;
+                                            $words = explode(' ', preg_replace('/[^a-zA-Z0-9 ]/', '', $state));
+                                            $initials = '';
+                                            foreach ($words as $w) {
+                                                if (!empty($w)) {
+                                                    $initials .= strtoupper($w[0]);
                                                 }
+                                            }
+                                            $set('kode', $initials);
+                                        }),
+                                    Forms\Components\TextInput::make('kode')
+                                        ->label('Kode Tes')
+                                        ->placeholder('Contoh: TKA1')
+                                        ->required()
+                                        ->maxLength(50)
+                                        ->hint('Otomatis terisi dari inisial nama, bisa Anda ubah.'),
+                                    Forms\Components\Textarea::make('deskripsi')
+                                        ->label('Deskripsi')
+                                        ->placeholder('Deskripsi singkat tentang paket tryout ini...')
+                                        ->rows(2)
+                                        ->columnSpanFull(),
+                                    Forms\Components\Select::make('jenjang')
+                                        ->options([
+                                            'SD' => 'SD',
+                                            'SMP' => 'SMP',
+                                            'SMA' => 'SMA',
+                                            'SMK' => 'SMK',
+                                            'UMUM' => 'UMUM',
+                                        ])
+                                        ->required()
+                                        ->default(fn () => auth()->user()->jenjang ?? 'UMUM')
+                                        ->disabled(fn () => auth()->user()->isAdmin() && auth()->user()->jenjang !== null)
+                                        ->dehydrated()
+                                        ->live(),
 
-                                                $allMapel = $query->get()->mapWithKeys(fn($m) => [$m->id => "{$m->nama_mapel} - {$m->jenjang}"]);
+                                    Forms\Components\Select::make('tingkat')
+                                        ->label('Tingkat')
+                                        ->options(function (Forms\Get $get) {
+                                            $jenjang = $get('jenjang') ?? (auth()->user()->isAdmin() ? auth()->user()->jenjang : null);
+                                            return match ($jenjang) {
+                                                'SD' => [1=>1, 2=>2, 3=>3, 4=>4, 5=>5, 6=>6],
+                                                'SMP' => [7=>7, 8=>8, 9=>9],
+                                                'SMA', 'SMK' => [10=>10, 11=>11, 12=>12],
+                                                default => []
+                                            };
+                                        })
+                                        ->required(fn (Forms\Get $get) => $get('jenjang') !== 'UMUM')
+                                        ->placeholder('-- Pilih Tingkat --')
+                                        ->visible(fn (Forms\Get $get) => $get('jenjang') !== 'UMUM'),
+                                    Forms\Components\Toggle::make('is_active')
+                                        ->label('Aktif')
+                                        ->helperText('Paket aktif bisa dijadwalkan'),
+                                ]),
+                        ]),
+                    Forms\Components\Wizard\Step::make('Daftar Mata Pelajaran')
+                        ->icon('heroicon-o-list-bullet')
+                        ->description('Tentukan mapel dan sumber soal untuk paket ini. Drag untuk mengubah urutan.')
+                        ->schema([
+                            Forms\Components\Repeater::make('mapelItems')
+                                ->relationship()
+                                ->label('')
+                                ->schema([
+                                    Forms\Components\Grid::make(4)
+                                        ->schema([
+                                            Forms\Components\Select::make('mapel_id')
+                                                ->label('Mata Pelajaran')
+                                                ->options(function (callable $get) {
+                                                    $user = auth()->user();
+                                                    $query = \App\Models\RefMapel::query();
 
-                                                $selectedMapelIds = collect($get('../../mapelItems'))
-                                                    ->pluck('mapel_id')
-                                                    ->filter(fn($id) => $id !== $get('mapel_id'))
-                                                    ->toArray();
+                                                    if ($user->isAdmin() && $user->jenjang) {
+                                                        $query->where('jenjang', $user->jenjang);
+                                                    }
 
-                                                return $allMapel->filter(fn($name, $id) => !in_array($id, $selectedMapelIds));
-                                            })
-                                            ->required()
-                                            ->reactive()
-                                            ->disableOptionWhen(
-                                                fn($value, $state, callable $get) =>
-                                                in_array($value, collect($get('../../mapelItems'))->pluck('mapel_id')->toArray()) && $value !== $state
-                                            )
-                                            ->afterStateUpdated(function (callable $set) {
-                                                $set('kategori_ids', []);
-                                                $set('soal_ids', []);
-                                            }),
-                                    ]),
+                                                    $allMapel = $query->get()->mapWithKeys(fn($m) => [$m->id => "{$m->nama_mapel} - {$m->jenjang}"]);
 
-                                Forms\Components\Grid::make(4)
-                                    ->schema([
-                                        Forms\Components\TextInput::make('waktu_mapel')
-                                            ->label('Waktu (menit)')
-                                            ->numeric()
-                                            ->default(30)
-                                            ->required()
-                                            ->minValue(1),
-                                    ]),
+                                                    $selectedMapelIds = collect($get('../../mapelItems'))
+                                                        ->pluck('mapel_id')
+                                                        ->filter(fn($id) => $id !== $get('mapel_id'))
+                                                        ->toArray();
 
-                                Forms\Components\Section::make('Kategori & Pengaturan Soal')
-                                    ->schema([
-                                        Forms\Components\Repeater::make('kategori_settings')
-                                            ->label('')
-                                            ->schema([
-                                                Forms\Components\Grid::make(4)
-                                                    ->schema([
-                                                        Forms\Components\Select::make('kategori_id')
-                                                            ->label('Kategori')
-                                                            ->options(function (callable $get) {
-                                                                $mapelId = $get('../../mapel_id'); 
-                                                                if (!$mapelId) return [];
-                                                                return \App\Models\RefPaketSoal::where('mapel_id', $mapelId)->pluck('nama_paket', 'id');
-                                                            })
-                                                            ->required()
-                                                            ->live()
-                                                            ->afterStateUpdated(fn (callable $set) => $set('soal_ids', [])),
+                                                    return $allMapel->filter(fn($name, $id) => !in_array($id, $selectedMapelIds));
+                                                })
+                                                ->required()
+                                                ->reactive()
+                                                ->disableOptionWhen(
+                                                    fn($value, $state, callable $get) =>
+                                                    in_array($value, collect($get('../../mapelItems'))->pluck('mapel_id')->toArray()) && $value !== $state
+                                                )
+                                                ->afterStateUpdated(function (callable $set) {
+                                                    $set('kategori_ids', []);
+                                                    $set('soal_ids', []);
+                                                }),
+                                        ]),
 
-                                                        Forms\Components\Select::make('mode')
-                                                            ->label('Mode')
-                                                            ->options([
-                                                                'ACAK' => '🎲 Acak',
-                                                                'MANUAL' => '✅ Manual',
-                                                                'SEMUA' => '📋 Semua Soal',
-                                                            ])
-                                                            ->default('ACAK')
-                                                            ->required()
-                                                            ->live(),
+                                    Forms\Components\Grid::make(4)
+                                        ->schema([
+                                            Forms\Components\TextInput::make('waktu_mapel')
+                                                ->label('Waktu (menit)')
+                                                ->numeric()
+                                                ->default(30)
+                                                ->required()
+                                                ->minValue(1),
+                                        ]),
 
-                                                        Forms\Components\TextInput::make('jumlah_soal')
-                                                            ->label('Jumlah Soal')
-                                                            ->numeric()
-                                                            ->default(10)
-                                                            ->required(fn(callable $get) => $get('mode') === 'ACAK')
-                                                            ->visible(fn(callable $get) => $get('mode') === 'ACAK')
-                                                            ->helperText(function(callable $get) {
-                                                                $katId = $get('kategori_id');
-                                                                $mapelId = $get('../../mapel_id');
-                                                                if ($katId && $mapelId) {
-                                                                    $count = \App\Models\BankSoal::where('paket_id', $katId)->where('mapel_id', $mapelId)->count();
-                                                                    return "Tersedia: {$count} soal";
-                                                                }
-                                                                return 'Pilih kategori dulu';
-                                                            }),
-                                                    ]),
+                                    Forms\Components\Section::make('Kategori & Pengaturan Soal')
+                                        ->schema([
+                                            Forms\Components\Repeater::make('kategori_settings')
+                                                ->label('')
+                                                ->schema([
+                                                    Forms\Components\Grid::make(4)
+                                                        ->schema([
+                                                            Forms\Components\Select::make('kategori_id')
+                                                                ->label('Kategori')
+                                                                ->options(function (callable $get) {
+                                                                    $mapelId = $get('../../mapel_id'); 
+                                                                    if (!$mapelId) return [];
+                                                                    return \App\Models\RefPaketSoal::where('mapel_id', $mapelId)->pluck('nama_paket', 'id');
+                                                                })
+                                                                ->required()
+                                                                ->live()
+                                                                ->afterStateUpdated(fn (callable $set) => $set('soal_ids', [])),
 
-                                                Forms\Components\Section::make('Pilih Soal Manual')
-                                                    ->visible(fn(callable $get) => $get('mode') === 'MANUAL')
-                                                    ->schema([
-                                                        Forms\Components\Hidden::make('soal_ids')
-                                                            ->default([])
-                                                            ->required(fn(callable $get) => $get('mode') === 'MANUAL'),
+                                                            Forms\Components\Select::make('mode')
+                                                                ->label('Mode')
+                                                                ->options([
+                                                                    'ACAK' => '🎲 Acak',
+                                                                    'MANUAL' => '✅ Manual',
+                                                                    'SEMUA' => '📋 Semua Soal',
+                                                                ])
+                                                                ->default('ACAK')
+                                                                ->required()
+                                                                ->live(),
 
-                                                        Forms\Components\Placeholder::make('soal_selector_ui')
-                                                            ->label('Daftar Soal')
-                                                            ->content(function (callable $get, \Filament\Forms\Components\Placeholder $component) {
-                                                                $katId = $get('kategori_id');
-                                                                $mapelId = $get('../../mapel_id');
-                                                                if (!$katId || !$mapelId) return 'Pilih Kategori terlebih dahulu.';
+                                                            Forms\Components\TextInput::make('jumlah_soal')
+                                                                ->label('Jumlah Soal')
+                                                                ->numeric()
+                                                                ->default(10)
+                                                                ->required(fn(callable $get) => $get('mode') === 'ACAK')
+                                                                ->visible(fn(callable $get) => $get('mode') === 'ACAK')
+                                                                ->helperText(function(callable $get) {
+                                                                    $katId = $get('kategori_id');
+                                                                    $mapelId = $get('../../mapel_id');
+                                                                    if ($katId && $mapelId) {
+                                                                        $count = \App\Models\BankSoal::where('paket_id', $katId)->where('mapel_id', $mapelId)->count();
+                                                                        return "Tersedia: {$count} soal";
+                                                                    }
+                                                                    return 'Pilih kategori dulu';
+                                                                }),
+                                                        ]),
 
-                                                                $soals = \App\Models\BankSoal::with(['paket', 'stimulus', 'jawaban'])
-                                                                    ->where('paket_id', $katId)
-                                                                    ->where('mapel_id', $mapelId)
-                                                                    ->get();
+                                                    Forms\Components\Section::make('Pilih Soal Manual')
+                                                        ->visible(fn(callable $get) => $get('mode') === 'MANUAL')
+                                                        ->schema([
+                                                            Forms\Components\Hidden::make('soal_ids')
+                                                                ->default([])
+                                                                ->required(fn(callable $get) => $get('mode') === 'MANUAL'),
 
-                                                                return view('filament.forms.components.soal-selector', [
-                                                                    'soals' => $soals,
-                                                                    'componentStatePath' => $component->getStatePath(),
-                                                                ]);
-                                                            }),
-                                                    ]),
-                                            ])
-                                            ->columnSpanFull()
-                                            ->defaultItems(1)
-                                            ->addActionLabel('+ Tambah Kategori')
-                                            ->itemLabel(
-                                                fn(array $state): ?string =>
-                                                \App\Models\RefPaketSoal::find($state['kategori_id'] ?? null)?->nama_paket ?? 'Kategori Baru'
-                                            ),
-                                    ]),
-                            ])
-                            ->reorderable()
-                            ->collapsible()
-                            ->cloneable()
-                            ->defaultItems(1)
-                            ->itemLabel(
-                                fn(array $state): ?string =>
-                                RefMapel::find($state['mapel_id'])?->nama_mapel ?? 'Mapel Baru'
-                            )
-                            ->addActionLabel('+ Tambah Mapel')
-                            ->deleteAction(
-                                fn(Forms\Components\Actions\Action $action) => $action->requiresConfirmation(),
-                            ),
-                    ]),
+                                                            Forms\Components\Placeholder::make('soal_selector_ui')
+                                                                ->label('Daftar Soal')
+                                                                ->content(function (callable $get, \Filament\Forms\Components\Placeholder $component) {
+                                                                    $katId = $get('kategori_id');
+                                                                    $mapelId = $get('../../mapel_id');
+                                                                    if (!$katId || !$mapelId) return 'Pilih Kategori terlebih dahulu.';
+
+                                                                    $soals = \App\Models\BankSoal::with(['paket', 'stimulus', 'jawaban'])
+                                                                        ->where('paket_id', $katId)
+                                                                        ->where('mapel_id', $mapelId)
+                                                                        ->get();
+
+                                                                    return view('filament.forms.components.soal-selector', [
+                                                                        'soals' => $soals,
+                                                                        'componentStatePath' => $component->getStatePath(),
+                                                                    ]);
+                                                                }),
+                                                        ]),
+                                                ])
+                                                ->columnSpanFull()
+                                                ->defaultItems(1)
+                                                ->addActionLabel('+ Tambah Kategori')
+                                                ->itemLabel(
+                                                    fn(array $state): ?string =>
+                                                    \App\Models\RefPaketSoal::find($state['kategori_id'] ?? null)?->nama_paket ?? 'Kategori Baru'
+                                                ),
+                                        ]),
+                                ])
+                                ->reorderable()
+                                ->collapsible()
+                                ->cloneable()
+                                ->defaultItems(1)
+                                ->itemLabel(
+                                    fn(array $state): ?string =>
+                                    \App\Models\RefMapel::find($state['mapel_id'] ?? null)?->nama_mapel ?? 'Mapel Baru'
+                                )
+                                ->addActionLabel('+ Tambah Mapel')
+                                ->deleteAction(
+                                    fn(Forms\Components\Actions\Action $action) => $action->requiresConfirmation(),
+                                ),
+                        ]),
+                ])->columnSpanFull()
             ]);
     }
 
@@ -284,9 +306,12 @@ class PaketTryoutResource extends Resource
                     ->sortable()
                     ->toggleable()
                     ->visible(fn () => auth()->user()->isSuperAdmin()),
-                Tables\Columns\TextColumn::make('mapel_items_count')
-                    ->label('Mapel')
-                    ->counts('mapelItems')
+                Tables\Columns\TextColumn::make('mapel_list')
+                    ->label('Mata Pelajaran')
+                    ->getStateUsing(fn($record) => $record->mapelItems->map(fn($item) => $item->mapel?->nama_mapel)->filter()->implode(', '))
+                    ->wrap(),
+                Tables\Columns\TextColumn::make('tingkat')
+                    ->label('Tingkat')
                     ->sortable(),
                 Tables\Columns\TextColumn::make('total_soal')
                     ->label('Total Soal')
@@ -319,7 +344,7 @@ class PaketTryoutResource extends Resource
                 Tables\Filters\Filter::make('advanced_filters')
                     ->columnSpanFull()
                     ->form([
-                        Forms\Components\Grid::make(4)
+                        Forms\Components\Grid::make(5)
                             ->schema([
                                 Forms\Components\Select::make('jenjang')
                                     ->label('Jenjang')
@@ -334,6 +359,23 @@ class PaketTryoutResource extends Resource
                                     ->visible(fn () => ! (auth()->user()->isAdmin() && auth()->user()->jenjang))
                                     ->live(),
                                 
+                                Forms\Components\Select::make('tingkat')
+                                    ->label('Tingkat')
+                                    ->placeholder('All')
+                                    ->options(function (Forms\Get $get) {
+                                        $jenjang = $get('jenjang') ?? (auth()->user()->isAdmin() ? auth()->user()->jenjang : null);
+                                        return match ($jenjang) {
+                                            'SD' => ['1'=>'1', '2'=>'2', '3'=>'3', '4'=>'4', '5'=>'5', '6'=>'6'],
+                                            'SMP' => ['7'=>'7', '8'=>'8', '9'=>'9'],
+                                            'SMA', 'SMK' => ['10'=>'10', '11'=>'11', '12'=>'12'],
+                                            default => [
+                                                '1'=>'1', '2'=>'2', '3'=>'3', '4'=>'4', '5'=>'5', '6'=>'6',
+                                                '7'=>'7', '8'=>'8', '9'=>'9', '10'=>'10', '11'=>'11', '12'=>'12'
+                                            ]
+                                        };
+                                    })
+                                    ->live(),
+
                                 Forms\Components\Select::make('mapel_id')
                                     ->label('Mata Pelajaran')
                                     ->placeholder('All')
@@ -369,12 +411,13 @@ class PaketTryoutResource extends Resource
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
                             ->when($data['jenjang'], fn ($q, $j) => $q->where('jenjang', $j))
+                            ->when($data['tingkat'], fn ($q, $t) => $q->where('tingkat', $t))
                             ->when($data['is_active'] !== null && $data['is_active'] !== '', fn ($q) => $q->where('is_active', $data['is_active']))
                             ->when($data['mapel_id'], fn ($q, $mId) => $q->whereHas('mapelItems', fn ($mq) => $mq->where('mapel_id', $mId)))
                             ->when($data['sekolah_id'], fn ($q, $sId) => $q->where('sekolah_id', $sId));
                     })
             ], layout: \Filament\Tables\Enums\FiltersLayout::AboveContent)
-            ->filtersFormColumns(4)
+            ->filtersFormColumns(5)
             ->actions([
                 Tables\Actions\Action::make('lihat_soal')
                     ->label('Lihat Soal')
