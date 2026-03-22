@@ -316,16 +316,65 @@ class PaketTryoutResource extends Resource
                     ->toggleable(isToggledHiddenByDefault: true),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('jenjang')
-                    ->options([
-                        'SD' => 'SD',
-                        'SMP' => 'SMP',
-                        'SMA' => 'SMA',
-                        'UMUM' => 'UMUM',
-                    ]),
-                Tables\Filters\TernaryFilter::make('is_active')
-                    ->label('Status Aktif'),
-            ])
+                Tables\Filters\Filter::make('advanced_filters')
+                    ->columnSpanFull()
+                    ->form([
+                        Forms\Components\Grid::make(4)
+                            ->schema([
+                                Forms\Components\Select::make('jenjang')
+                                    ->label('Jenjang')
+                                    ->options([
+                                        'SD' => 'SD',
+                                        'SMP' => 'SMP',
+                                        'SMA' => 'SMA',
+                                        'SMK' => 'SMK',
+                                        'UMUM' => 'UMUM',
+                                    ])
+                                    ->placeholder('All')
+                                    ->visible(fn () => ! (auth()->user()->isAdmin() && auth()->user()->jenjang))
+                                    ->live(),
+                                
+                                Forms\Components\Select::make('mapel_id')
+                                    ->label('Mata Pelajaran')
+                                    ->placeholder('All')
+                                    ->options(function (Forms\Get $get) {
+                                        $user = auth()->user();
+                                        $jenjang = $get('jenjang') ?? ($user->isAdmin() ? $user->jenjang : null);
+                                        
+                                        return \App\Models\RefMapel::when($jenjang, fn($q) => $q->where('jenjang', $jenjang))
+                                            ->get()
+                                            ->mapWithKeys(fn($m) => [$m->id => "{$m->nama_mapel} - {$m->jenjang}"]);
+                                    })
+                                    ->live()
+                                    ->searchable()
+                                    ->preload(),
+
+                                Forms\Components\Select::make('is_active')
+                                    ->label('Status')
+                                    ->placeholder('All')
+                                    ->options([
+                                        '1' => 'Aktif',
+                                        '0' => 'Tidak Aktif',
+                                    ]),
+
+                                Forms\Components\Select::make('sekolah_id')
+                                    ->label('Sekolah')
+                                    ->placeholder('All')
+                                    ->options(fn() => \App\Models\Sekolah::pluck('nama_sekolah', 'id'))
+                                    ->searchable()
+                                    ->preload()
+                                    ->visible(fn () => auth()->user()->isSuperAdmin()),
+                            ]),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when($data['jenjang'], fn ($q, $j) => $q->where('jenjang', $j))
+                            ->when($data['is_active'] !== null && $data['is_active'] !== '', fn ($q) => $q->where('is_active', $data['is_active']))
+                            ->when($data['mapel_id'], fn ($q, $mId) => $q->whereHas('mapelItems', fn ($mq) => $mq->where('mapel_id', $mId)))
+                            ->when($data['sekolah_id'], fn ($q, $sId) => $q->where('sekolah_id', $sId));
+                    })
+            ], layout: \Filament\Tables\Enums\FiltersLayout::AboveContent)
+            ->filtersFormColumns(4)
             ->actions([
                 Tables\Actions\Action::make('lihat_soal')
                     ->label('Lihat Soal')
