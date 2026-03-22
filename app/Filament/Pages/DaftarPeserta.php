@@ -27,12 +27,13 @@ class DaftarPeserta extends Page implements HasTable, HasForms
     protected static string $view = 'filament.pages.daftar-peserta';
 
     // State untuk filter
-    public ?array $filterData = ['kelompok' => 'all'];
+    public ?array $filterData = ['kelompok' => 'all', 'kelas_id' => 'all'];
 
     public function mount(): void
     {
         $this->form->fill([
             'kelompok' => 'all',
+            'kelas_id' => 'all',
         ]);
     }
 
@@ -65,6 +66,14 @@ class DaftarPeserta extends Page implements HasTable, HasForms
                     })
                     ->native(false)
                     ->selectablePlaceholder(false),
+
+                Select::make('kelas_id')
+                    ->label('Kelas')
+                    ->options(function () {
+                        return \App\Models\Kelas::pluck('nama_kelas', 'id')->toArray();
+                    })
+                    ->placeholder('Semua Kelas')
+                    ->native(false),
             ])
             ->statePath('filterData');
     }
@@ -94,6 +103,14 @@ class DaftarPeserta extends Page implements HasTable, HasForms
         if ($selectedKelompok !== 'all') {
             $query->whereHas('jadwalTryout', function (Builder $q) use ($selectedKelompok) {
                 $q->where('nama_sesi', $selectedKelompok);
+            });
+        }
+
+        // 4. Filter berdasarkan Kelas
+        $selectedKelas = $this->filterData['kelas_id'] ?? 'all';
+        if ($selectedKelas && $selectedKelas !== 'all') {
+            $query->whereHas('user', function ($q) use ($selectedKelas) {
+                $q->where('kelas_id', $selectedKelas);
             });
         }
 

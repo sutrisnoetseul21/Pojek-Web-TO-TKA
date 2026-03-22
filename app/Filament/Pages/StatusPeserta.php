@@ -29,12 +29,13 @@ class StatusPeserta extends Page implements HasTable, HasForms
     protected static string $view = 'filament.pages.status-peserta';
 
     // State untuk filter
-    public ?array $filterData = ['status_test' => 'all'];
+    public ?array $filterData = ['status_test' => 'all', 'kelas_id' => 'all'];
 
     public function mount(): void
     {
         $this->form->fill([
             'status_test' => 'all',
+            'kelas_id' => 'all',
         ]);
     }
 
@@ -58,6 +59,14 @@ class StatusPeserta extends Page implements HasTable, HasForms
                     ])
                     ->native(false)
                     ->selectablePlaceholder(false),
+
+                Select::make('kelas_id')
+                    ->label('Kelas')
+                    ->options(function () {
+                        return \App\Models\Kelas::pluck('nama_kelas', 'id')->toArray();
+                    })
+                    ->placeholder('Semua Kelas')
+                    ->native(false),
             ])
             ->statePath('filterData');
     }
@@ -87,6 +96,14 @@ class StatusPeserta extends Page implements HasTable, HasForms
         $selectedStatus = $this->filterData['status_test'] ?? 'all';
         if ($selectedStatus !== 'all') {
             $query->where('status', $selectedStatus);
+        }
+
+        // 4. Filter berdasarkan Kelas
+        $selectedKelas = $this->filterData['kelas_id'] ?? 'all';
+        if ($selectedKelas && $selectedKelas !== 'all') {
+            $query->whereHas('user', function ($q) use ($selectedKelas) {
+                $q->where('kelas_id', $selectedKelas);
+            });
         }
 
         return $table

@@ -148,7 +148,7 @@ class ProktorResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\JadwalRuanganRelationManager::class,
         ];
     }
 
