@@ -70,6 +70,7 @@ class RefPaketSoalResource extends Resource
                             $mapel = \App\Models\RefMapel::find($state);
                             if ($mapel) {
                                 $set('jenjang', $mapel->jenjang);
+                                $set('tingkat', null); // Clear tingkat when mapel changes
                             }
                         }
                     }),
@@ -82,6 +83,19 @@ class RefPaketSoalResource extends Resource
                     ->disabled()
                     ->dehydrated()
                     ->helperText('Otomatis dari Mata Pelajaran'),
+                Forms\Components\Select::make('tingkat')
+                    ->label('Tingkat')
+                    ->options(function (Forms\Get $get) {
+                        $jenjang = $get('jenjang');
+                        return match ($jenjang) {
+                            'SD' => [1=>1, 2=>2, 3=>3, 4=>4, 5=>5, 6=>6],
+                            'SMP' => [7=>7, 8=>8, 9=>9],
+                            'SMA', 'SMK' => [10=>10, 11=>11, 12=>12],
+                            default => []
+                        };
+                    })
+                    ->required(fn (Forms\Get $get) => $get('jenjang') !== 'UMUM')
+                    ->placeholder('-- Pilih Tingkat --'),
                 Forms\Components\Textarea::make('keterangan')
                     ->label('Keterangan')
                     ->placeholder('Catatan atau deskripsi untuk kategori ini...')
@@ -101,6 +115,9 @@ class RefPaketSoalResource extends Resource
                 Tables\Columns\TextColumn::make('mapel.nama_mapel')
                     ->label('Mata Pelajaran')
                     ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('tingkat')
+                    ->label('Tingkat')
                     ->sortable(),
                 Tables\Columns\BadgeColumn::make('jenjang')
                     ->colors([
@@ -127,7 +144,7 @@ class RefPaketSoalResource extends Resource
                 Tables\Filters\Filter::make('advanced_filters')
                     ->columnSpanFull()
                     ->form([
-                        Forms\Components\Grid::make(2)
+                        Forms\Components\Grid::make(3)
                             ->schema([
                                 Forms\Components\Select::make('jenjang')
                                     ->label('Jenjang')
@@ -156,11 +173,22 @@ class RefPaketSoalResource extends Resource
                                     ->live()
                                     ->searchable()
                                     ->preload(),
+
+                                Forms\Components\Select::make('tingkat')
+                                    ->label('Tingkat')
+                                    ->placeholder('All')
+                                    ->options([
+                                        '1' => 'Tingkat 1', '2' => 'Tingkat 2', '3' => 'Tingkat 3',
+                                        '4' => 'Tingkat 4', '5' => 'Tingkat 5', '6' => 'Tingkat 6',
+                                        '7' => 'Tingkat 7', '8' => 'Tingkat 8', '9' => 'Tingkat 9',
+                                        '10' => 'Tingkat 10', '11' => 'Tingkat 11', '12' => 'Tingkat 12',
+                                    ]),
                             ]),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
                         return $query
                             ->when($data['mapel_id'], fn ($q, $mId) => $q->where('mapel_id', $mId))
+                            ->when($data['tingkat'], fn ($q, $t) => $q->where('tingkat', $t))
                             ->when($data['jenjang'] && empty($data['mapel_id']), function ($q) use ($data) {
                                 $q->whereHas('mapel', fn ($m) => $m->where('jenjang', $data['jenjang']));
                             });

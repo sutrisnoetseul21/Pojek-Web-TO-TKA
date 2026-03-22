@@ -61,6 +61,7 @@ class BankSoalImport implements ToModel, WithHeadingRow
             'mapel_id'    => $mapelId,
             'paket_id'    => $paketId,
             'stimulus_id' => $stimulusId,
+            'tingkat'     => $row['tingkat'] ?? null,
             'tipe_soal'   => $tipeSoal,
             'pertanyaan'  => $row['pertanyaan'] ?? '',
             'pembahasan'  => $row['pembahasan'] ?? null,

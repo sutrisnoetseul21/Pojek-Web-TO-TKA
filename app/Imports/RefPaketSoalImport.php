@@ -71,10 +71,13 @@ class RefPaketSoalImport implements ToCollection, WithHeadingRow
                 continue;
             }
 
+            $tingkat = $row['tingkat'] ?? null;
+
             RefPaketSoal::create([
                 'nama_paket' => $namaPaket,
                 'mapel_id'   => $mapelId,
                 'jenjang'    => $mapel->jenjang, // Auto ikut mapel
+                'tingkat'    => $tingkat,
                 'keterangan' => $keterangan,
             ]);
         }

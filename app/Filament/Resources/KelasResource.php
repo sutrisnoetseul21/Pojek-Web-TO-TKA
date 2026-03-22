@@ -65,6 +65,7 @@ class KelasResource extends Resource
                                     $sekolah = \App\Models\Sekolah::find($state);
                                     if ($sekolah) {
                                         $set('jenjang', $sekolah->jenjang);
+                                        $set('tingkat', null); // Clear tingkat when sekolah changes
                                     }
                                 }
                             })
@@ -89,6 +90,19 @@ class KelasResource extends Resource
                             ->default(fn () => auth()->user()->jenjang)
                             ->disabled()
                             ->dehydrated(),
+                        Forms\Components\Select::make('tingkat')
+                            ->label('Tingkat')
+                            ->options(function (Forms\Get $get) {
+                                $jenjang = $get('jenjang');
+                                return match ($jenjang) {
+                                    'SD' => [1=>1, 2=>2, 3=>3, 4=>4, 5=>5, 6=>6],
+                                    'SMP' => [7=>7, 8=>8, 9=>9],
+                                    'SMA', 'SMK' => [10=>10, 11=>11, 12=>12],
+                                    default => []
+                                };
+                            })
+                            ->required(fn (Forms\Get $get) => $get('jenjang') !== 'UMUM')
+                            ->placeholder('-- Pilih Tingkat --'),
                         Forms\Components\TextInput::make('nama_kelas')
                             ->label('Nama Kelas')
                             ->required()
@@ -113,6 +127,9 @@ class KelasResource extends Resource
                 Tables\Columns\TextColumn::make('nama_kelas')
                     ->label('Kelas')
                     ->searchable()
+                    ->sortable(),
+                Tables\Columns\TextColumn::make('tingkat')
+                    ->label('Tingkat')
                     ->sortable(),
                 Tables\Columns\BadgeColumn::make('jenjang')
                     ->colors([
@@ -143,6 +160,14 @@ class KelasResource extends Resource
                     ->options(
                         collect(Jenjang::cases())->mapWithKeys(fn($j) => [$j->value => $j->label()])
                     ),
+                Tables\Filters\SelectFilter::make('tingkat')
+                    ->label('Tingkat')
+                    ->options([
+                        '1' => 'Tingkat 1', '2' => 'Tingkat 2', '3' => 'Tingkat 3',
+                        '4' => 'Tingkat 4', '5' => 'Tingkat 5', '6' => 'Tingkat 6',
+                        '7' => 'Tingkat 7', '8' => 'Tingkat 8', '9' => 'Tingkat 9',
+                        '10' => 'Tingkat 10', '11' => 'Tingkat 11', '12' => 'Tingkat 12',
+                    ]),
                 Tables\Filters\TrashedFilter::make(),
             ])
             ->actions([

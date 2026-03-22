@@ -14,6 +14,7 @@ class RefPaketSoal extends Model
     protected $fillable = [
         'nama_paket',
         'jenjang',
+        'tingkat',
         'mapel_id',
         'keterangan',
     ];

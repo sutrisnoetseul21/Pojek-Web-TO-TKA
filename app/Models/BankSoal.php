@@ -15,6 +15,7 @@ class BankSoal extends Model
         'paket_id',
         'mapel_id',
         'stimulus_id',
+        'tingkat',
         'tipe_soal',
         'pertanyaan',
         'pembahasan',

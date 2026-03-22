@@ -55,7 +55,7 @@ class BankSoalResource extends Resource
                         ->icon('heroicon-o-adjustments-horizontal')
                         ->schema([
                             // Baris 1: Mata Pelajaran & Paket
-                            Forms\Components\Grid::make(2)
+                            Forms\Components\Grid::make(3)
                                 ->schema([
                                     Forms\Components\Select::make('mapel_id')
                                         ->options(function () {
@@ -75,6 +75,7 @@ class BankSoalResource extends Resource
                                         ->afterStateUpdated(function (Forms\Set $set) {
                                             $set('paket_id', null);
                                             $set('stimulus_id', null);
+                                            $set('tingkat', null); // Clear tingkat when mapel changes
                                         })
                                         ->rules([
                                             fn() => function (string $attribute, $value, $fail) {
@@ -97,6 +98,28 @@ class BankSoalResource extends Resource
                                         ->disabled(fn(Forms\Get $get) => !$get('mapel_id'))
                                         ->afterStateUpdated(fn(Forms\Set $set) => $set('stimulus_id', null))
                                         ->label('Paket Soal'),
+                                    Forms\Components\Select::make('tingkat')
+                                        ->label('Tingkat')
+                                        ->options(function (Forms\Get $get) {
+                                            $mapelId = $get('mapel_id');
+                                            if (!$mapelId) return [];
+                                            $mapel = \App\Models\RefMapel::find($mapelId);
+                                            if (!$mapel) return [];
+                                            return match ($mapel->jenjang) {
+                                                'SD' => [1=>1, 2=>2, 3=>3, 4=>4, 5=>5, 6=>6],
+                                                'SMP' => [7=>7, 8=>8, 9=>9],
+                                                'SMA', 'SMK' => [10=>10, 11=>11, 12=>12],
+                                                default => []
+                                            };
+                                        })
+                                        ->required(function (Forms\Get $get) {
+                                            $mapelId = $get('mapel_id');
+                                            if (!$mapelId) return false;
+                                            $mapel = \App\Models\RefMapel::find($mapelId);
+                                            return $mapel && $mapel->jenjang !== 'UMUM';
+                                        })
+                                        ->disabled(fn (Forms\Get $get) => !$get('mapel_id'))
+                                        ->placeholder('-- Pilih Tingkat --'),
                                 ]),
 
                             // Baris 2: Tipe Soal, Stimulus, Bobot
@@ -358,6 +381,9 @@ class BankSoalResource extends Resource
                     ->label('Mata Pelajaran')
                     ->searchable()
                     ->sortable(),
+                Tables\Columns\TextColumn::make('tingkat')
+                    ->label('Tingkat')
+                    ->sortable(),
                 Tables\Columns\TextColumn::make('stimulus.judul')
                     ->label('Stimulus')
                     ->limit(30)
@@ -393,7 +419,7 @@ class BankSoalResource extends Resource
                 Tables\Filters\Filter::make('advanced_filters')
                     ->columnSpanFull()
                     ->form([
-                        Forms\Components\Grid::make(4)
+                        Forms\Components\Grid::make(5)
                             ->schema([
                                 Forms\Components\Select::make('jenjang')
                                     ->label('Jenjang')
@@ -447,6 +473,16 @@ class BankSoalResource extends Resource
                                         'MENJODOHKAN' => 'Menjodohkan',
                                         'ISIAN' => 'Isian',
                                     ]),
+                                
+                                Forms\Components\Select::make('tingkat')
+                                    ->label('Tingkat')
+                                    ->placeholder('All')
+                                    ->options([
+                                        '1' => 'Tingkat 1', '2' => 'Tingkat 2', '3' => 'Tingkat 3',
+                                        '4' => 'Tingkat 4', '5' => 'Tingkat 5', '6' => 'Tingkat 6',
+                                        '7' => 'Tingkat 7', '8' => 'Tingkat 8', '9' => 'Tingkat 9',
+                                        '10' => 'Tingkat 10', '11' => 'Tingkat 11', '12' => 'Tingkat 12',
+                                    ]),
                             ]),
                     ])
                     ->query(function (Builder $query, array $data): Builder {
@@ -454,6 +490,7 @@ class BankSoalResource extends Resource
                             ->when($data['mapel_id'], fn ($q, $mId) => $q->where('mapel_id', $mId))
                             ->when($data['paket_id'], fn ($q, $pId) => $q->where('paket_id', $pId))
                             ->when($data['tipe_soal'], fn ($q, $type) => $q->where('tipe_soal', $type))
+                            ->when($data['tingkat'], fn ($q, $t) => $q->where('tingkat', $t))
                             ->when($data['jenjang'] && empty($data['mapel_id']), function ($q) use ($data) {
                                 $q->whereHas('mapel', fn ($m) => $m->where('jenjang', $data['jenjang']));
                             });
