@@ -15,7 +15,7 @@ use Illuminate\Support\Str;
 
 class StatusTes extends Page implements HasTable
 {
-    use InteractsWithTable;
+    use InteractsWithTable, \App\Traits\HasProktorFilter;
 
     protected static ?string $navigationIcon = 'heroicon-o-check-circle';
     protected static ?string $navigationLabel = 'Status Tes';
@@ -33,13 +33,16 @@ class StatusTes extends Page implements HasTable
 
     public function table(Table $table): Table
     {
-        return $table
-            ->poll('10s') // 🔄 Auto Refresh setiap 10 detik agar status berubah otomatis
-            ->query(JadwalTryout::query()
+        $query = JadwalTryout::query()
                 ->where('is_active', true)
                 ->where('tgl_mulai', '<=', now()->endOfDay())
-                ->where('tgl_selesai', '>=', now()->startOfDay())
-            )
+                ->where('tgl_selesai', '>=', now()->startOfDay());
+
+        $query = $this->applyProktorJadwalFilter($query);
+
+        return $table
+            ->poll('10s') // 🔄 Auto Refresh setiap 10 detik agar status berubah otomatis
+            ->query($query)
             ->columns([
                 TextColumn::make('index')
                     ->label('No')
@@ -67,6 +70,7 @@ class StatusTes extends Page implements HasTable
                     ->action(
                         \Filament\Tables\Actions\Action::make('set_active')
                             ->requiresConfirmation()
+                            ->visible(fn () => !auth()->user()->isProktor())
                             ->action(function (JadwalTryout $record) {
                                 if ($record->is_token_active) {
                                     $record->update(['is_token_active' => false]);

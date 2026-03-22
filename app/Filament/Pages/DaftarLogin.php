@@ -16,7 +16,7 @@ use Filament\Notifications\Notification;
 
 class DaftarLogin extends Page implements HasTable
 {
-    use InteractsWithTable;
+    use InteractsWithTable, \App\Traits\HasProktorFilter;
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-left-on-rectangle';
     protected static ?string $navigationLabel = 'Daftar Login';
@@ -33,15 +33,18 @@ class DaftarLogin extends Page implements HasTable
 
     public function table(Table $table): Table
     {
+        $query = PesertaJadwal::query()
+            ->whereIn('status', ['started', 'working'])
+            ->whereIn('user_id', function ($query) {
+                $query->select('user_id')
+                    ->from('sessions')
+                    ->whereNotNull('user_id');
+            });
+
+        $query = $this->applyProktorFilter($query);
+
         return $table
-            ->query(PesertaJadwal::query()
-                ->whereIn('status', ['started', 'working'])
-                ->whereIn('user_id', function ($query) {
-                    $query->select('user_id')
-                        ->from('sessions')
-                        ->whereNotNull('user_id');
-                })
-            )
+            ->query($query)
             ->poll('20s')
             ->columns([
                 TextColumn::make('user.username')

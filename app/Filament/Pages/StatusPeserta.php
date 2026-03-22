@@ -18,7 +18,7 @@ use Filament\Notifications\Notification;
 
 class StatusPeserta extends Page implements HasTable, HasForms
 {
-    use InteractsWithTable, InteractsWithForms;
+    use InteractsWithTable, InteractsWithForms, \App\Traits\HasProktorFilter;
 
     protected static ?string $navigationIcon = 'heroicon-o-clipboard-document-list';
     protected static ?string $navigationLabel = 'Status Peserta';
@@ -80,6 +80,8 @@ class StatusPeserta extends Page implements HasTable, HasForms
         $query = PesertaJadwal::query()
             ->whereIn('jadwal_tryout_id', $activeJadwalIds)
             ->with(['user', 'jadwalTryout', 'currentMapel']); // Eager load
+
+        $query = $this->applyProktorFilter($query);
 
         // 3. Filter berdasarkan status
         $selectedStatus = $this->filterData['status_test'] ?? 'all';

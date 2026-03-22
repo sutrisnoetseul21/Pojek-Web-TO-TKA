@@ -18,7 +18,7 @@ use Illuminate\Database\Eloquent\Collection;
 
 class KelompokTes extends Page implements HasTable
 {
-    use InteractsWithTable;
+    use InteractsWithTable, \App\Traits\HasProktorFilter;
 
     protected static ?string $navigationIcon = 'heroicon-o-users';
     protected static ?string $navigationLabel = 'Kelompok Tes';
@@ -36,15 +36,18 @@ class KelompokTes extends Page implements HasTable
 
     public function table(Table $table): Table
     {
+        $query = PesertaJadwal::query()
+            ->whereHas('jadwalTryout', function ($q) {
+                $q->where('is_active', true)
+                  ->where('tgl_mulai', '<=', now()->endOfDay())
+                  ->where('tgl_selesai', '>=', now()->startOfDay());
+            })
+            ->with(['user', 'jadwalTryout.paketTryout']);
+
+        $query = $this->applyProktorFilter($query);
+
         return $table
-            ->query(PesertaJadwal::query()
-                ->whereHas('jadwalTryout', function ($q) {
-                    $q->where('is_active', true)
-                      ->where('tgl_mulai', '<=', now()->endOfDay())
-                      ->where('tgl_selesai', '>=', now()->startOfDay());
-                })
-                ->with(['user', 'jadwalTryout.paketTryout'])
-            )
+            ->query($query)
             ->columns([
                 TextColumn::make('status')
                     ->label('Status')

@@ -17,7 +17,7 @@ use Illuminate\Database\Eloquent\Builder;
 
 class DaftarPeserta extends Page implements HasTable, HasForms
 {
-    use InteractsWithTable, InteractsWithForms;
+    use InteractsWithTable, InteractsWithForms, \App\Traits\HasProktorFilter;
 
     protected static ?string $navigationIcon = 'heroicon-o-user';
     protected static ?string $navigationLabel = 'Daftar Peserta';
@@ -86,6 +86,8 @@ class DaftarPeserta extends Page implements HasTable, HasForms
         // 2. Query data peserta jadwal
         $query = PesertaJadwal::query()
             ->whereIn('jadwal_tryout_id', $activeJadwalIds);
+
+        $query = $this->applyProktorFilter($query);
 
         // 3. Filter berdasarkan kelompok (nama_sesi)
         $selectedKelompok = $this->filterData['kelompok'] ?? 'all';

@@ -362,7 +362,7 @@ class JadwalTryoutResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            RelationManagers\RuanganProktorRelationManager::class,
         ];
     }
 
@@ -371,6 +371,7 @@ class JadwalTryoutResource extends Resource
         return [
             'index' => Pages\ListJadwalTryouts::route('/'),
             'create' => Pages\CreateJadwalTryout::route('/create'),
+            'view' => Pages\ViewJadwalTryout::route('/{record}'),
             'edit' => Pages\EditJadwalTryout::route('/{record}/edit'),
         ];
     }

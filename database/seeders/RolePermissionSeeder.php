@@ -24,9 +24,13 @@ class RolePermissionSeeder extends Seeder
         $superAdmin = Role::firstOrCreate(['name' => 'super_admin']);
         $admin      = Role::firstOrCreate(['name' => 'admin']);
         $peserta    = Role::firstOrCreate(['name' => 'peserta']);
+        $proktor    = Role::firstOrCreate(['name' => 'proktor']);
 
         // Super Admin mendapat semua permission
         $superAdmin->syncPermissions(Permission::all());
+
+        // Proktor mendapat akses monitoring
+        $proktor->syncPermissions(['manage_monitoring']);
 
         $this->command->info('✅ Roles dan Permissions berhasil dibuat/diperbarui.');
     }

@@ -16,7 +16,7 @@ use Filament\Notifications\Notification;
 
 class RequestReset extends Page implements HasTable
 {
-    use InteractsWithTable;
+    use InteractsWithTable, \App\Traits\HasProktorFilter;
 
     protected static ?string $navigationIcon = 'heroicon-o-arrow-path-rounded-square';
     protected static ?string $navigationLabel = 'Request Reset Login';
@@ -33,10 +33,13 @@ class RequestReset extends Page implements HasTable
 
     public function table(Table $table): Table
     {
+        $query = PesertaJadwal::query()
+            ->whereNotNull('request_reset_at');
+
+        $query = $this->applyProktorFilter($query);
+
         return $table
-            ->query(PesertaJadwal::query()
-                ->whereNotNull('request_reset_at')
-            )
+            ->query($query)
             ->poll('5s') // Auto refresh agar antrean terupdate otomatis
             ->columns([
                 TextColumn::make('user.username')

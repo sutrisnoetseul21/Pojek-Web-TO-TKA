@@ -57,6 +57,11 @@ class ProktorResource extends Resource
                             ->required()
                             ->unique(ignoreRecord: true)
                             ->disabled(fn($record) => $record !== null),
+                        Forms\Components\TextInput::make('email')
+                            ->label('Email')
+                            ->email()
+                            ->required()
+                            ->unique(ignoreRecord: true),
                         Forms\Components\TextInput::make('nama_lengkap')
                             ->label('Nama Lengkap (Pengawas)')
                             ->required(),
@@ -68,7 +73,7 @@ class ProktorResource extends Resource
                             ->helperText('Jika dikosongkan saat tambah proktor, password akan digenerate otomatis'),
                         Forms\Components\Hidden::make('role')
                             ->default('proktor'),
-                    ])->columns(['default' => 3]),
+                    ])->columns(['default' => 2]),
 
                 Forms\Components\Section::make('Otoritas Wilayah')
                     ->description('Tentukan sekolah tempat tugas Proktor')
@@ -93,6 +98,11 @@ class ProktorResource extends Resource
             ->columns([
                 Tables\Columns\TextColumn::make('username')
                     ->label('Username')
+                    ->searchable()
+                    ->sortable()
+                    ->copyable(),
+                Tables\Columns\TextColumn::make('email')
+                    ->label('Email')
                     ->searchable()
                     ->sortable()
                     ->copyable(),

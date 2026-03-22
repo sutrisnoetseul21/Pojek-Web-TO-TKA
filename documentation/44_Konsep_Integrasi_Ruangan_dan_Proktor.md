@@ -413,10 +413,22 @@ if ($user->role === 'proktor') {
 
 ### 🔵 Fase 1 — Core
 - [x] **Langkah A: Fondasi Database & Model** *(Selesai — 22 Mar 2026)*
-  - ✅ Migrasi `create_jadwal_ruangan_proktor_table` dijalankan
+  - ✅ Migrasi `jadwal_ruangan_proktor` dijalankan
   - ✅ Model `JadwalRuanganProktor` dibuat
   - ✅ Relasi di `JadwalTryout`, `Ruangan`, `User` ditambahkan
+  - 🛠️ **Fix Bug**: Migrasi `add_proktor_to_user_role_enum_table` dijalankan untuk menambah `'proktor'` ke enum `users.role` (mengatasi Error 1265).
 
-- [ ] **Langkah B: Hak Akses & Interface Admin** *(Menunggu Review Langkah A)*
-- [ ] **Langkah C: Pembatasan & Trait Monitoring**
+- [x] **Langkah B: Hak Akses & Interface Admin** *(Selesai — 22 Mar 2026)*
+  - ✅ Helper `isProktor()` & Perizinan Panel di `User.php` ditambahkan
+  - ✅ Role `proktor` di `RolePermissionSeeder` dibuat & dijalankan
+  - ✅ `RuanganProktorRelationManager` & Page `ViewJadwalTryout` dibuat & didaftarkan
+
+- [x] **Langkah C: Pembatasan & Trait Monitoring** *(Selesai — 22 Mar 2026)*
+  - ✅ Trait `HasProktorFilter` dibuat & diintegrasikan di 6 halaman monitoring
+  - ✅ Query `StatusPeserta`, `DaftarPeserta`, `KelompokTes`, `DaftarLogin`, `RequestReset` terfilter per ruangan Proktor
+  - ✅ Tombol aksi Token di `StatusTes` berhasil disembunyikan untuk Proktor (Read-only)
+  - ✅ Verifikasi login & akses panel Proktor berhasil ditest via browser (Tanpa 500 error)
+
+---
+*Fase 1 Selesai. Menunggu persetujuan untuk melangkah ke Fase 2 (Automasi).*
 ```
