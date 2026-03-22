@@ -43,10 +43,10 @@ class PaketTryoutResource extends Resource
         return $query;
     }
 
-    protected static ?string $navigationLabel = 'Paket Tryout';
-    protected static ?string $modelLabel = 'Paket Tryout';
-    protected static ?string $pluralModelLabel = 'Paket Tryout';
-    protected static ?string $navigationGroup = 'Tryout';
+    protected static ?string $navigationLabel = 'Paket Ujian';
+    protected static ?string $modelLabel = 'Paket Ujian';
+    protected static ?string $pluralModelLabel = 'Paket Ujian';
+    protected static ?string $navigationGroup = 'Ujian';
     protected static ?int $navigationSort = 1;
 
     protected static ?string $navigationIcon = 'heroicon-o-cube';
