@@ -77,6 +77,10 @@ class UserResource extends Resource
                         Forms\Components\TextInput::make('nama_lengkap')
                             ->label('Nama Lengkap')
                             ->required(),
+                        Forms\Components\TextInput::make('nisn')
+                            ->label('NISN')
+                            ->maxLength(10)
+                            ->placeholder('Nomor Induk Siswa Nasional'),
                         Forms\Components\Select::make('jenjang')
                             ->options([
                                 'SD' => 'SD',
@@ -168,6 +172,11 @@ class UserResource extends Resource
                     ->searchable()
                     ->placeholder('Belum diisi')
                     ->sortable(),
+                Tables\Columns\TextColumn::make('nisn')
+                    ->label('NISN')
+                    ->searchable()
+                    ->placeholder('—')
+                    ->toggleable(),
                 Tables\Columns\TextColumn::make('sekolahRelation.npsn')
                     ->label('NPSN')
                     ->searchable()

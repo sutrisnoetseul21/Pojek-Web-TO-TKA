@@ -52,6 +52,7 @@ class User extends Authenticatable implements FilamentUser
         'sekolah_id',
         'kelas_id',
         'nomor_peserta',
+        'nisn',
         'manage_all_kelas',
     ];
 

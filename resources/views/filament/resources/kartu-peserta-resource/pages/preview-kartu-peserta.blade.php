@@ -29,13 +29,11 @@
                 padding: 0;
                 border-radius: 0;
             }
-            /* Sembunyikan elemen Filament saat print */
             .fi-header, .fi-sidebar, .fi-topbar, .fi-actions {
                 display: none !important;
             }
         }
 
-        /* Styles dari kartu-peserta.blade.php */
         .kartu-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
@@ -44,164 +42,219 @@
 
         .kartu {
             background: white;
-            border: 1.5px solid #cbd5e0;
-            border-radius: 10px;
-            overflow: hidden;
+            border: 1px solid #000;
             break-inside: avoid;
             page-break-inside: avoid;
+            font-size: 11px;
+            color: #000;
+            font-family: Arial, Helvetica, sans-serif;
         }
 
+        /* ── Header Kartu ── */
         .kartu-header {
-            background: linear-gradient(135deg, #2d3748 0%, #4a5568 100%);
-            color: white;
-            padding: 10px 14px;
-            display: flex;
-            align-items: center;
-            gap: 8px;
+            width: 100%;
+            border-collapse: collapse;
+            border-bottom: 1.5px solid #000;
         }
 
-        .kartu-header .logo {
-            width: 28px;
-            height: 28px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 6px;
+        .kartu-header td {
+            vertical-align: middle;
+            padding: 8px 10px;
+        }
+
+        .col-logo {
+            width: 45px;
+            text-align: center;
+        }
+
+        .col-logo .logo-placeholder {
+            width: 30px;
+            height: 30px;
+            border: 1px dashed #718096;
+            margin: 0 auto;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 14px;
-        }
-
-        .kartu-header .title {
-            font-size: 11px;
-            font-weight: 700;
-            letter-spacing: 0.5px;
-            text-transform: uppercase;
-        }
-
-        .kartu-header .subtitle {
-            font-size: 9px;
-            opacity: 0.75;
-            margin-top: 1px;
-        }
-
-        .kartu-body {
-            padding: 12px 14px;
-        }
-
-        .field-group {
-            margin-bottom: 8px;
-        }
-
-        .field-label {
-            font-size: 9px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-size: 7px;
             color: #718096;
-            font-weight: 600;
-            margin-bottom: 2px;
+            border-radius: 50%;
         }
 
-        .field-value {
-            font-size: 13px;
-            font-weight: 700;
-            color: #1a202c;
+        .col-title {
+            text-align: center;
             line-height: 1.3;
         }
 
-        .field-value.sekolah {
+        .header-line-sub {
+            font-size: 12px;
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .header-line-main {
+            font-size: 13px;
+            font-weight: bold;
+            text-transform: uppercase;
+            margin-top: 1px;
+        }
+
+        .header-sekolah {
+            font-size: 12px;
+            font-weight: bold;
+            margin-top: 1px;
+        }
+
+        .col-qr {
+            width: 45px;
+            text-align: center;
+        }
+
+        .col-qr .qr-placeholder {
+            width: 30px;
+            height: 30px;
+            border: 1px solid #1a202c;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 7px;
+            font-weight: 700;
+        }
+
+        /* ── Body Kartu ── */
+        .kartu-body {
+            padding: 10px 12px;
+        }
+
+        .info-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        .info-table td {
+            padding: 3px 0;
+            vertical-align: top;
             font-size: 11px;
-            font-weight: 600;
-            color: #4a5568;
+            line-height: 1.3;
+        }
+
+        .info-table .label {
+            width: 130px;
+            font-weight: normal;
+        }
+
+        .info-table .sep {
+            width: 12px;
+            text-align: center;
+        }
+
+        .info-table .value {
+            font-weight: bold;
+        }
+
+        .info-table .value.password {
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 13px;
+            font-weight: bold;
+            letter-spacing: 0px;
         }
 
         .divider {
-            height: 1px;
-            background: #e2e8f0;
-            margin: 10px 0;
-        }
-
-        .credentials-box {
-            background: #f7fafc;
-            border: 1px dashed #cbd5e0;
-            border-radius: 6px;
-            padding: 8px 12px;
-        }
-
-        .credential-row {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            margin-bottom: 6px;
-        }
-
-        .credential-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .credential-label {
-            font-size: 9px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: #718096;
-            font-weight: 600;
-            width: 60px;
-            flex-shrink: 0;
-        }
-
-        .credential-value {
-            font-family: 'Courier New', Courier, monospace;
-            font-size: 14px;
-            font-weight: 800;
-            color: #1a202c;
-            letter-spacing: 1px;
-        }
-
-        .credential-value.password {
-            color: #c53030;
-            background: #fff5f5;
-            padding: 2px 6px;
-            border-radius: 4px;
-            border: 1px solid #fed7d7;
+            border-top: 1px solid #e2e8f0;
+            margin: 8px 0;
         }
     </style>
 
     <div class="preview-container">
         <div class="a4-mockup">
-            <div style="text-align: center; margin-bottom: 30px; border-bottom: 2px solid #333; padding-bottom: 10px;">
-                <h2 style="font-size: 18px; font-weight: 800; text-transform: uppercase;">Kartu Login Peserta Tryout</h2>
-                <p style="font-size: 14px; color: #666;">{{ $filterLabel }}</p>
+            <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">
+                <h2 style="font-size: 16px; font-weight: 800; text-transform: uppercase;">Kartu Login Peserta TKA</h2>
+                <p style="font-size: 13px; color: #666;">{{ $filterLabel }}</p>
             </div>
 
             <div class="kartu-grid">
                 @foreach ($users as $user)
+                @php
+                    $jadwal = $user->jadwalTryouts->first();
+                    $namaSesi = $jadwal->nama_sesi ?? '—';
+                    $usernameProktor = '—';
+                    
+                    if ($jadwal) {
+                        $penugasan = \App\Models\JadwalRuanganProktor::where('jadwal_tryout_id', $jadwal->id)
+                            ->where('kelas_id', $user->kelas_id)
+                            ->with('proktor')
+                            ->first();
+                        if ($penugasan && $penugasan->proktor) {
+                            $usernameProktor = $penugasan->proktor->username;
+                        }
+                    }
+                @endphp
                 <div class="kartu">
-                    <div class="kartu-header">
-                        <div class="logo">🎓</div>
-                        <div>
-                            <div class="title">Kartu Peserta</div>
-                            <div class="subtitle">Bimbel Excellent</div>
-                        </div>
-                    </div>
+                    <table class="kartu-header">
+                        <tr>
+                            <td class="col-logo">
+                                <div class="logo-placeholder">LOGO</div>
+                            </td>
+                            <td class="col-title">
+                                <div class="header-line-sub">KARTU LOGIN GLADI BERSIH</div>
+                                <div class="header-line-main">TES KEMAMPUAN AKADEMIK</div>
+                                <div class="header-sekolah">{{ $namaSekolah ?? '—' }}</div>
+                                <div class="header-line-sub">TAHUN 2026</div>
+                            </td>
+                            <td class="col-qr">
+                                <div class="qr-placeholder">QR</div>
+                            </td>
+                        </tr>
+                    </table>
+                    
                     <div class="kartu-body">
-                        <div class="field-group">
-                            <div class="field-label">Nama Lengkap</div>
-                            <div class="field-value">{{ $user->nama_lengkap ?: '—' }}</div>
-                        </div>
-                        <div class="field-group">
-                            <div class="field-label">Sekolah</div>
-                            <div class="field-value sekolah">{{ $user->sekolahRelation->nama_sekolah ?? '—' }}</div>
-                        </div>
-                        <div class="divider"></div>
-                        <div class="credentials-box">
-                            <div class="credential-row">
-                                <div class="credential-label">Username</div>
-                                <div class="credential-value">{{ $user->username }}</div>
-                            </div>
-                            <div class="credential-row">
-                                <div class="credential-label">Password</div>
-                                <div class="credential-value password">{{ $user->plain_password }}</div>
-                            </div>
-                        </div>
+                        @php
+                            $ttl = '—';
+                            if ($user->tempat_lahir || $user->tanggal_lahir) {
+                                $tempat = $user->tempat_lahir ?: '—';
+                                $tanggal = $user->tanggal_lahir ? $user->tanggal_lahir->translatedFormat('d F Y') : '—';
+                                $ttl = "$tempat, $tanggal";
+                            }
+                        @endphp
+                        <table class="info-table">
+                            <tr>
+                                <td class="label">Nama Peserta</td>
+                                <td class="sep">:</td>
+                                <td class="value">{{ $user->nama_lengkap ?: '—' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">NISN</td>
+                                <td class="sep">:</td>
+                                <td class="value">{{ $user->nisn ?: '—' }}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Tempat, Tanggal Lahir</td>
+                                <td class="sep">:</td>
+                                <td class="value">{{ $ttl }}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Username</td>
+                                <td class="sep">:</td>
+                                <td class="value">{{ $user->username }}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Password</td>
+                                <td class="sep">:</td>
+                                <td class="value password">{{ $user->plain_password }}</td>
+                            </tr>
+                            @if ($jenisCetak === 'dengan_jadwal')
+                            <tr>
+                                <td class="label">ID Proktor / Ruang</td>
+                                <td class="sep">:</td>
+                                <td class="value">{{ $usernameProktor }}</td>
+                            </tr>
+                            <tr>
+                                <td class="label">Sesi</td>
+                                <td class="sep">:</td>
+                                <td class="value">{{ $namaSesi }}</td>
+                            </tr>
+                            @endif
+                        </table>
                     </div>
                 </div>
                 @endforeach
