@@ -50,7 +50,7 @@ class ProktorResource extends Resource
         return $form
             ->schema([
                 Forms\Components\Section::make('Akun Proktor')
-                    ->description('Informasi login untuk Pengawas Ruangan')
+                    ->description('Informasi login untuk Proktor Ruangan')
                     ->schema([
                         Forms\Components\TextInput::make('username')
                             ->label('Username')
@@ -63,7 +63,7 @@ class ProktorResource extends Resource
                             ->required()
                             ->unique(ignoreRecord: true),
                         Forms\Components\TextInput::make('nama_lengkap')
-                            ->label('Nama Lengkap (Pengawas)')
+                            ->label('Nama Lengkap (Proktor)')
                             ->required(),
                         Forms\Components\TextInput::make('plain_password')
                             ->label('Password')
@@ -92,41 +92,80 @@ class ProktorResource extends Resource
                     ->sortable()
                     ->copyable(),
                 Tables\Columns\TextColumn::make('nama_lengkap')
-                    ->label('Nama Pengawas')
+                    ->label('Nama Proktor')
                     ->searchable()
                     ->placeholder('Belum diisi'),
-                Tables\Columns\TextColumn::make('penugasanRuangan.kelas.nama_kelas')
-                    ->label('Kelas Tugas')
-                    ->badge()
-                    ->placeholder('Semua Kelas')
-                    ->separator(', '),
-                Tables\Columns\TextColumn::make('created_at')
-                    ->label('Dibuat')
-                    ->dateTime('d M Y')
-                    ->sortable(),
             ])
             ->defaultSort('username', 'asc')
             ->filters([
-                Tables\Filters\SelectFilter::make('sekolah_id')
-                    ->label('Sekolah')
-                    ->relationship('sekolahRelation', 'nama_sekolah')
-                    ->searchable()
-                    ->preload()
-                    ->placeholder('Semua Sekolah')
-                    ->visible(fn () => auth()->user()->hasRole('super_admin')),
-            ])
+                Tables\Filters\Filter::make('advanced_filters')
+                    ->columnSpanFull()
+                    ->form([
+                        Forms\Components\Grid::make(3)
+                            ->schema([
+                                Forms\Components\Select::make('sekolah_id')
+                                    ->label('Sekolah')
+                                    ->placeholder('All')
+                                    ->options(fn() => \App\Models\Sekolah::pluck('nama_sekolah', 'id'))
+                                    ->searchable()
+                                    ->preload()
+                                    ->visible(fn () => auth()->user()->hasRole('super_admin'))
+                                    ->live(),
+
+                                Forms\Components\Select::make('jenjang')
+                                    ->label('Jenjang')
+                                    ->placeholder('All')
+                                    ->options([
+                                        'SD' => 'SD', 'SMP' => 'SMP', 'SMA' => 'SMA', 'SMK' => 'SMK', 'UMUM' => 'UMUM'
+                                    ])
+                                    ->live(),
+
+                                Forms\Components\Select::make('tingkat')
+                                    ->label('Tingkat')
+                                    ->placeholder('All')
+                                    ->options(function (Forms\Get $get) {
+                                        $jenjang = $get('jenjang');
+                                        return match ($jenjang) {
+                                            'SD' => ['1'=>'1', '2'=>'2', '3'=>'3', '4'=>'4', '5'=>'5', '6'=>'6'],
+                                            'SMP' => ['7'=>'7', '8'=>'8', '9'=>'9'],
+                                            'SMA', 'SMK' => ['10'=>'10', '11'=>'11', '12'=>'12'],
+                                            default => [
+                                                '1'=>'1', '2'=>'2', '3'=>'3', '4'=>'4', '5'=>'5', '6'=>'6',
+                                                '7'=>'7', '8'=>'8', '9'=>'9', '10'=>'10', '11'=>'11', '12'=>'12'
+                                            ]
+                                        };
+                                    })
+                                    ->live(),
+                            ]),
+                    ])
+                    ->query(function (Builder $query, array $data): Builder {
+                        return $query
+                            ->when($data['sekolah_id'], fn ($q, $sId) => $q->where('sekolah_id', $sId))
+                            ->when($data['jenjang'], fn ($q, $j) => $q->whereHas('penugasanRuangan.jadwalTryout.paketTryout', fn($pq) => $pq->where('jenjang', $j)))
+                            ->when($data['tingkat'], fn ($q, $t) => $q->whereHas('penugasanRuangan.jadwalTryout.paketTryout', fn($pq) => $pq->where('tingkat', $t)));
+                    })
+            ], layout: \Filament\Tables\Enums\FiltersLayout::AboveContent)
+            ->filtersFormColumns(3)
             ->actions([
                 Tables\Actions\Action::make('alokasi')
                     ->label('Alokasi')
                     ->icon('heroicon-o-calendar-days')
                     ->color('warning')
-                    ->url(fn ($record) => \App\Filament\Resources\PenugasanProktorResource::getUrl('index', [
-                        'tableFilters' => [
-                            'proktor_id' => [
-                                'value' => $record->id,
-                            ],
-                        ],
-                    ])),
+                    ->modalHeading('Daftar Penugasan Proktor')
+                    ->modalSubmitAction(function ($action, $record) {
+                        return $action
+                            ->label('Edit')
+                            ->color('warning')
+                            ->url(\App\Filament\Resources\PenugasanProktorResource::getUrl('index', [
+                                'tableFilters' => [
+                                    'advanced_filters' => [
+                                        'proktor_id' => $record->id,
+                                    ],
+                                ],
+                            ]));
+                    })
+                    ->modalCancelActionLabel('Tutup')
+                    ->modalContent(fn ($record) => view('filament.actions.proktor-alokasi-modal', ['record' => $record])),
                 Tables\Actions\EditAction::make(),
                 Tables\Actions\DeleteAction::make(),
             ])
